@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { Send, PlusCircle, Paperclip, Loader2 } from 'lucide-react';
+import { Send, Paperclip, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
 import { motion, AnimatePresence } from 'framer-motion';
