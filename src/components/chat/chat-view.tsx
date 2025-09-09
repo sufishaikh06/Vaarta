@@ -74,8 +74,13 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
       // Command: "apply for leave"
       if (userInput.toLowerCase().includes('apply for leave')) {
         if (role === 'student') {
-          const { output } = await draftApplication({ userInput });
-          addMessage('bot', undefined, <ApplicationPreview application={output} />);
+          try {
+            const output = await draftApplication({ userInput });
+            addMessage('bot', undefined, <ApplicationPreview application={output} />);
+          } catch (e) {
+            console.error(e);
+            addMessage('bot', 'Sorry, I had trouble drafting the application. Please try again.');
+          }
         } else {
           addMessage('bot', "This feature is only available for students.");
         }
@@ -219,6 +224,17 @@ function ApplicationPreview({ application }: { application: any }) {
       description: 'Your application has been formatted and sent for approval.',
     });
   };
+
+  if (!application) {
+    return (
+        <div className="p-4 bg-background rounded-lg border">
+            <div className="flex items-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <p>Drafting your application...</p>
+            </div>
+        </div>
+    );
+  }
 
   return (
     <div className="p-4 bg-background rounded-lg border">
