@@ -1,0 +1,84 @@
+
+{
+  "users": {
+    "user_student_1": {
+      "name": "Rohan Sharma",
+      "role": "student",
+      "department": "Computer Science",
+      "email": "rohan.sharma@example.com",
+      "ERP_id": "STU12345"
+    },
+    "user_faculty_1": {
+      "name": "Dr. Priya Mehta",
+      "role": "faculty",
+      "department": "Computer Science",
+      "email": "priya.mehta@example.com",
+      "ERP_id": "FAC67890"
+    },
+    "user_parent_1": {
+      "name": "Mr. Anand Sharma",
+      "role": "parent",
+      "email": "anand.sharma@example.com",
+      "child_id": "user_student_1"
+    }
+  },
+  "attendance": {
+    "att_1": {
+      "student_id": "user_student_1",
+      "subject": "Data Structures",
+      "date": "2023-10-26T10:00:00Z",
+      "status": "present"
+    }
+  },
+  "marks": {
+    "mark_1": {
+      "student_id": "user_student_1",
+      "subject": "Data Structures",
+      "exam": "Mid-Term",
+      "marks": 85
+    }
+  },
+  "timetable": {
+    "tt_1": {
+      "class": "CS-A",
+      "subject": "Data Structures",
+      "teacher": "Dr. Priya Mehta",
+      "time": "10:00 AM",
+      "room_hall": "A-101"
+    }
+  },
+  "notices": {
+    "notice_1": {
+      "title": "Mid-Term Exam Schedule",
+      "message": "The mid-term exams are scheduled from 15th November.",
+      "type": "announcement",
+      "target_group": "all_students",
+      "created_by": "user_faculty_1"
+    }
+  },
+  "applications": {
+    "app_1": {
+      "student_id": "user_student_1",
+      "type": "sick_leave",
+      "content": "Requesting sick leave due to fever.",
+      "status": "pending",
+      "faculty_id": "user_faculty_1"
+    }
+  },
+  "documents": {
+    "doc_1": {
+      "title": "DSA Lecture 1",
+      "file_url": "/documents/dsa_lecture_1.pdf",
+      "uploaded_by": "user_faculty_1",
+      "subject": "Data Structures"
+    }
+  },
+  "events": {
+    "event_1": {
+      "name": "Tech Fest 2023",
+      "date": "2023-11-05T09:00:00Z",
+      "details": "Annual technical festival.",
+      "target_group": "all_students"
+    }
+  }
+}

@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 export function VaartaLogo(props: React.SVGProps<SVGSVGElement>) {

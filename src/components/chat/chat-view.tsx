@@ -1,0 +1,239 @@
+
+'use client';
+import { useState, useEffect, useRef } from 'react';
+import type { UserRole } from './chat-widget';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Button } from '../ui/button';
+import { Send, Mic, Volume2, LogOut, Loader2, Paperclip, Bot, FileText, CheckCircle2 } from 'lucide-react';
+import { Textarea } from '../ui/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
+import { ApplicationForm } from '../student/application-form';
+import { NoticeForm } from '../faculty/notice-form';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { draftApplication } from '@/ai/flows/application-drafter';
+
+interface Message {
+  id: string;
+  role: 'user' | 'bot';
+  text?: string;
+  component?: React.ReactNode;
+  isTyping?: boolean;
+}
+
+export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => void }) {
+  const [messages, setMessages] = useState<Message[]>([
+    { id: '1', role: 'bot', text: `Welcome, ${role}! How can I help you today?` },
+  ]);
+  const [input, setInput] = useState('');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [formType, setFormType] = useState<'application' | 'notice' | null>(null);
+
+  const { toast } = useToast();
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const onFormSubmit = (data: any) => {
+    setIsFormOpen(false);
+    addMessage('bot', `A new ${formType} has been submitted successfully!`);
+    toast({
+        title: `${formType === 'application' ? 'Application' : 'Notice'} Submitted`,
+        description: "Your submission has been recorded.",
+    });
+  }
+
+  const addMessage = (role: 'user' | 'bot', text?: string, component?: React.ReactNode) => {
+    const id = Date.now().toString();
+    setMessages((prev) => [...prev.filter(m => !m.isTyping), { id, role, text, component }]);
+    return id;
+  };
+  
+  const addTypingIndicator = () => {
+    setMessages((prev) => [...prev, { id: 'typing', role: 'bot', isTyping: true }]);
+  }
+
+  const handleSendMessage = async () => {
+    if (input.trim() === '') return;
+    const userInput = input;
+    addMessage('user', userInput);
+    setInput('');
+    addTypingIndicator();
+
+    // Simulate bot response with command handling
+    setTimeout(async () => {
+      // Command: "apply for leave"
+      if (userInput.toLowerCase().includes('apply for leave')) {
+        if (role === 'student') {
+          const { output } = await draftApplication({ userInput });
+          addMessage('bot', undefined, <ApplicationPreview application={output} />);
+        } else {
+          addMessage('bot', "This feature is only available for students.");
+        }
+      } 
+      // Command: "post notice"
+      else if (userInput.toLowerCase().includes('post notice')) {
+        if (role === 'faculty') {
+          setFormType('notice');
+          setIsFormOpen(true);
+          setMessages(prev => prev.filter(m => !m.isTyping));
+        } else {
+          addMessage('bot', "This feature is only available for faculty members.");
+        }
+      } else {
+        addMessage('bot', `I'm processing your request: "${userInput}". For this demo, I can respond to 'apply for leave' and 'post notice'.`);
+      }
+    }, 1000);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+
+  return (
+    <TooltipProvider>
+    <div className="flex-grow flex flex-col h-full">
+      {/* Chat Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map((msg) => (
+          <motion.div
+            key={msg.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className={cn('flex items-end gap-2', msg.role === 'user' ? 'justify-end' : 'justify-start')}
+          >
+            {msg.role === 'bot' && (
+              <Avatar className="h-8 w-8">
+                <AvatarFallback><Bot /></AvatarFallback>
+              </Avatar>
+            )}
+            <div
+              className={cn(
+                'max-w-xs md:max-w-md rounded-xl px-4 py-3 shadow-sm flex flex-col gap-2',
+                msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-secondary text-secondary-foreground rounded-bl-none'
+              )}
+            >
+              {msg.isTyping ? (
+                 <div className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                    <span className="h-1.5 w-1.5 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                    <span className="h-1.5 w-1.5 bg-current rounded-full animate-bounce"></span>
+                </div>
+              ) : (
+                <>
+                {msg.text && <p className="text-sm whitespace-pre-wrap">{msg.text}</p>}
+                {msg.component}
+                </>
+              )}
+            </div>
+             {msg.role === 'user' && (
+              <Avatar className="h-8 w-8">
+                <AvatarFallback>{role.charAt(0).toUpperCase()}</AvatarFallback>
+              </Avatar>
+            )}
+          </motion.div>
+        ))}
+        <div ref={chatEndRef} />
+      </div>
+
+      {/* Chat Input */}
+      <div className="p-4 bg-background border-t">
+        <div className="relative">
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={`Ask me anything, or type 'apply for leave'...`}
+            className="pr-20 pl-12 min-h-[48px] resize-none"
+            rows={1}
+          />
+           <div className="absolute left-3 top-1/2 -translate-y-1/2 flex gap-1">
+             <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Paperclip className="h-5 w-5 text-muted-foreground" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>Attach File (Not implemented)</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Mic className="h-5 w-5 text-muted-foreground" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>Voice Input (Not implemented)</TooltipContent>
+            </Tooltip>
+            <Button size="icon" onClick={handleSendMessage} disabled={!input.trim()} className="h-8 w-8">
+              <Send className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </div>
+       {/* Footer with Role & Logout */}
+        <div className="p-2 border-t bg-secondary/50 flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Logged in as <strong className="capitalize text-foreground">{role}</strong></span>
+            <Button variant="ghost" size="sm" onClick={onLogout} className="text-muted-foreground">
+                <LogOut className="h-4 w-4 mr-1" /> Logout
+            </Button>
+        </div>
+    </div>
+    
+    <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>
+                    {formType === 'application' ? 'Leave Application' : 'Post a New Notice'}
+                </DialogTitle>
+            </DialogHeader>
+            {formType === 'application' && <ApplicationForm onSubmit={onFormSubmit} />}
+            {formType === 'notice' && <NoticeForm onSubmit={onFormSubmit} />}
+        </DialogContent>
+    </Dialog>
+
+    </TooltipProvider>
+  );
+}
+
+function ApplicationPreview({ application }: { application: any }) {
+  const { toast } = useToast();
+  const handleSubmit = () => {
+    toast({
+      title: 'Application Sent!',
+      description: 'Your application has been formatted and sent for approval.',
+    });
+  };
+
+  return (
+    <div className="p-4 bg-background rounded-lg border">
+      <div className="flex items-center gap-3 mb-3">
+        <FileText className="h-6 w-6 text-primary" />
+        <h4 className="font-bold text-lg">Application Draft</h4>
+      </div>
+      <div className="space-y-2 text-sm border-l-2 border-primary/50 pl-3">
+        <p><strong className="text-muted-foreground">To:</strong> Dr. Priya Mehta (HOD, Computer Science)</p>
+        <p><strong className="text-muted-foreground">Subject:</strong> {application.subject}</p>
+        <p className="whitespace-pre-wrap">{application.body}</p>
+      </div>
+      <Button className="w-full mt-4" onClick={handleSubmit}>
+        <CheckCircle2 className="mr-2" /> Confirm and Send Email
+      </Button>
+    </div>
+  );
+}

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,12 +19,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ThumbsUp, ThumbsDown, Loader2 } from "lucide-react";
-import { validateFacultyNotice } from "@/ai/flows/faculty-notice-validation";
+import { ThumbsUp, ThumbsDown, Loader2, Wand2 } from "lucide-react";
+import { validateNotice } from "@/ai/flows/notice-validator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters.").max(100),
-  content: z.string().min(20, "Notice content must be at least 20 characters.").max(500),
+  content: z.string().min(20, "Notice content must be at least 20 characters.").max(1000),
+  targetGroup: z.string().min(1, "Please select a target group."),
 });
 
 type NoticeFormValues = z.infer<typeof formSchema>;
@@ -35,6 +45,7 @@ interface NoticeFormProps {
 type ValidationState = {
     status: 'idle' | 'loading' | 'valid' | 'invalid';
     reason?: string;
+    suggestion?: string;
 }
 
 export function NoticeForm({ onSubmit }: NoticeFormProps) {
@@ -54,9 +65,9 @@ export function NoticeForm({ onSubmit }: NoticeFormProps) {
     
     setValidation({ status: 'loading' });
     try {
-        const result = await validateFacultyNotice({ noticeText });
+        const result = await validateNotice({ noticeText });
         if (result.isValid) {
-            setValidation({ status: 'valid' });
+            setValidation({ status: 'valid', suggestion: result.suggestedRevision });
         } else {
             setValidation({ status: 'invalid', reason: result.reason });
         }
@@ -94,8 +105,31 @@ export function NoticeForm({ onSubmit }: NoticeFormProps) {
                 <Textarea placeholder="Enter the full details of the notice here..." {...field} rows={6} />
               </FormControl>
                <FormDescription>
-                {noticeContent?.length || 0}/500 characters
+                {noticeContent?.length || 0}/1000 characters
               </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+         <FormField
+          control={form.control}
+          name="targetGroup"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Target Group</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select who will see this notice" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="all_students">All Students</SelectItem>
+                  <SelectItem value="all_faculty">All Faculty</SelectItem>
+                  <SelectItem value="cs_students_year1">Computer Science - Year 1</SelectItem>
+                  <SelectItem value="mech_students_year2">Mechanical - Year 2</SelectItem>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -103,8 +137,8 @@ export function NoticeForm({ onSubmit }: NoticeFormProps) {
         
         <div className="space-y-4">
              <Button type="button" variant="outline" className="w-full" onClick={handleValidate} disabled={validation.status === 'loading' || !form.formState.isValid}>
-                {validation.status === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                Analyze Notice with AI
+                {validation.status === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Wand2 className="mr-2 h-4 w-4" />}
+                Validate with AI
             </Button>
             
             {validation.status === 'valid' && (
@@ -112,7 +146,7 @@ export function NoticeForm({ onSubmit }: NoticeFormProps) {
                     <ThumbsUp className="h-4 w-4 !text-green-600" />
                     <AlertTitle>Notice Looks Good!</AlertTitle>
                     <AlertDescription>
-                        This notice is clear and appropriate for broadcast.
+                        {validation.suggestion ? <><strong>Suggestion:</strong> {validation.suggestion}</> : "This notice is clear and appropriate."}
                     </AlertDescription>
                 </Alert>
             )}
@@ -128,7 +162,7 @@ export function NoticeForm({ onSubmit }: NoticeFormProps) {
             )}
         </div>
         
-        <Button type="submit" className="w-full" disabled={validation.status !== 'valid'}>
+        <Button type="submit" className="w-full" disabled={validation.status === 'idle'}>
             Post Notice
         </Button>
       </form>

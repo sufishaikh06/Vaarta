@@ -1,0 +1,53 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    function isRole(role) {
+      return isAuth() && getUserData(request.auth.uid).role == role;
+    }
+
+    // Users: Can read their own data. Admins can read/write all.
+    match /users/{userId} {
+      allow read: if isAuth() && (request.auth.uid == userId || isRole('admin'));
+      allow write: if isRole('admin');
+    }
+
+    // Notices, Events, Timetable, Documents: Publicly readable, faculty/admin can write
+    match /{collection}/{docId}
+      where collection in ['notices', 'events', 'timetable', 'documents'] {
+      allow read: if true;
+      allow write: if isRole('faculty') || isRole('admin');
+    }
+
+    // Student-specific data: Attendance, Marks
+    // Students can read their own data. Parents can read their child's data. Faculty can read/write.
+    match /{collection}/{docId}
+      where collection in ['attendance', 'marks'] {
+      allow read: if (isRole('student') && resource.data.student_id == request.auth.uid) ||
+                     (isRole('parent') && resource.data.student_id == getUserData(request.auth.uid).child_id) ||
+                     isRole('faculty') ||
+                     isRole('admin');
+      allow create: if isRole('faculty') || isRole('admin');
+      allow update, delete: if isRole('faculty') || isRole('admin');
+    }
+
+    // Applications: Students can create. Faculty can read/update.
+    match /applications/{appId} {
+      allow create: if isRole('student') && request.resource.data.student_id == request.auth.uid;
+      allow read, update: if (isRole('student') && resource.data.student_id == request.auth.uid) ||
+                             (isRole('faculty') && resource.data.faculty_id == request.auth.uid) ||
+                             isRole('admin');
+      allow delete: if isRole('admin');
+    }
+  }
+}
