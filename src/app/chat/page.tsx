@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { VaartaBotLogo } from '@/components/icons';
+import { VaartaLogo } from '@/components/icons';
 import Link from 'next/link';
 
 export type UserRole = 'student' | 'faculty' | 'parent';
@@ -21,8 +21,8 @@ export default function ChatPage() {
        <div className="w-full max-w-5xl h-full flex flex-col">
         <header className="flex items-center justify-between p-4 border-b">
           <Link href="/" className="flex items-center gap-2">
-            <VaartaBotLogo className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold tracking-tight text-primary">VaartaBot</h1>
+            <VaartaLogo className="h-8 w-8 text-primary" />
+            <h1 className="text-2xl font-bold tracking-tight text-primary">Vaarta</h1>
           </Link>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">Acting as:</span>

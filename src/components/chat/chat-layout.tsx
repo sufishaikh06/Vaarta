@@ -19,7 +19,7 @@ interface Message {
 }
 
 const initialMessages: Message[] = [
-    { id: 1, role: 'bot', content: 'Welcome to VaartaBot! How can I assist you today?' },
+    { id: 1, role: 'bot', content: 'Welcome to Vaarta! How can I assist you today?' },
 ];
 
 export function ChatLayout({ role }: { role: UserRole }) {
@@ -106,7 +106,7 @@ export function ChatLayout({ role }: { role: UserRole }) {
             {message.role !== 'user' && (
                <Avatar className="h-8 w-8">
                  <AvatarImage src="https://picsum.photos/seed/bot/40/40" alt="Bot" />
-                 <AvatarFallback>VB</AvatarFallback>
+                 <AvatarFallback>V</AvatarFallback>
                </Avatar>
             )}
             <div

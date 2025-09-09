@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot, GraduationCap, MessageSquareHeart, Users } from 'lucide-react';
-import { VaartaBotLogo } from '@/components/icons';
+import { VaartaLogo } from '@/components/icons';
 import Image from 'next/image';
 
 const features = [
@@ -34,8 +34,8 @@ export default function Home() {
       <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <nav className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <VaartaBotLogo className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold tracking-tight">VaartaBot</span>
+            <VaartaLogo className="h-8 w-8 text-primary" />
+            <span className="text-2xl font-bold tracking-tight">Vaarta</span>
           </Link>
           <Button asChild>
             <Link href="/chat">Launch Chat</Link>
@@ -48,7 +48,7 @@ export default function Home() {
         <section className="relative py-20 md:py-32 bg-primary/10">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter text-gray-800">
-              Welcome to <span className="text-primary">VaartaBot</span>
+              Welcome to <span className="text-primary">Vaarta</span>
             </h1>
             <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground">
               Your intelligent, multilingual assistant for seamless college communication. Simplifying campus life, one conversation at a time.
@@ -65,7 +65,7 @@ export default function Home() {
             <div className="text-center">
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Everything You Need, All in One Place</h2>
               <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-                VaartaBot streamlines communication for the entire college community.
+                Vaarta streamlines communication for the entire college community.
               </p>
             </div>
             <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
@@ -92,7 +92,7 @@ export default function Home() {
                 <div className="order-2 md:order-1">
                     <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Smart, Simple, and Secure</h2>
                     <p className="mt-4 text-lg text-muted-foreground">
-                        Built for the demands of a modern educational institution. VaartaBot leverages cutting-edge AI and robust cloud infrastructure to deliver a reliable experience.
+                        Built for the demands of a modern educational institution. Vaarta leverages cutting-edge AI and robust cloud infrastructure to deliver a reliable experience.
                     </p>
                     <ul className="mt-6 space-y-4 text-muted-foreground">
                         <li className="flex items-start">
@@ -126,7 +126,7 @@ export default function Home() {
 
       <footer className="py-8 bg-gray-800 text-gray-300">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p>&copy; {new Date().getFullYear()} VaartaBot. A Smart India Hackathon Project.</p>
+          <p>&copy; {new Date().getFullYear()} Vaarta. A Smart India Hackathon Project.</p>
         </div>
       </footer>
     </div>

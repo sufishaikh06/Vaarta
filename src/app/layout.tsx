@@ -11,7 +11,7 @@ const ptSans = PT_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'VaartaBot - Your College AI Assistant',
+  title: 'Vaarta - Your College AI Assistant',
   description: 'A multilingual chatbot for students, faculty, and parents.',
 };
 
