@@ -258,3 +258,5 @@ function ApplicationPreview({ application }: { application: any }) {
     </div>
   );
 }
+
+    
