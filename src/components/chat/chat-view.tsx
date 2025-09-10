@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import type { UserRole, AppUser } from './chat-widget';
@@ -153,7 +154,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     } else {
       // Default to RAG flow
       try {
-        const output = await answerQuestion({ question: userInput, studentId: user?.id });
+        const output = await answerQuestion({ question: userInput, userId: user?.id, userRole: user?.role });
         addMessage('bot', output.answer);
       } catch (e) {
         console.error(e);
