@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,9 +29,10 @@ interface LoginFormProps {
     role: UserRole;
     onLoginSuccess: () => void;
     onBack: () => void;
+    onNavigateToSignup: () => void;
 }
 
-export function LoginForm({ role, onLoginSuccess, onBack }: LoginFormProps) {
+export function LoginForm({ role, onLoginSuccess, onBack, onNavigateToSignup }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -121,7 +121,7 @@ export function LoginForm({ role, onLoginSuccess, onBack }: LoginFormProps) {
         </form>
         </Form>
         <div className="mt-4 text-center text-sm">
-            Don't have an account? <a href="#" className="text-primary font-medium hover:underline">Sign up</a>
+            Don't have an account? <Button variant="link" className="p-0 h-auto" onClick={onNavigateToSignup}>Sign up</Button>
         </div>
     </div>
   );

@@ -1,4 +1,3 @@
-
 'use client';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Users, GraduationCap, Building, User, MessageSquare } from 'lucide-react';
@@ -7,11 +6,11 @@ import { ChatView } from './chat-view';
 import { cn } from '@/lib/utils';
 import { VaartaLogo } from '../icons';
 import { LoginForm } from '../auth/login-form';
-import { Button } from '../ui/button';
+import { SignUpForm } from '../auth/signup-form';
 
 export type UserRole = 'student' | 'faculty' | 'parent' | 'guest';
 
-type ViewState = 'role-selection' | 'login' | 'chat';
+type ViewState = 'role-selection' | 'login' | 'signup' | 'chat';
 
 export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
   const [role, setRole] = useState<UserRole>('guest');
@@ -37,7 +36,11 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
   
   const handleBackToRoleSelection = () => {
     setViewState('role-selection');
-  }
+  };
+
+  const navigateToSignup = () => setViewState('signup');
+  const navigateToLogin = () => setViewState('login');
+
 
   const roles = [
     { id: 'student', name: 'Student', icon: <GraduationCap /> },
@@ -116,7 +119,30 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
                     transition={{ duration: 0.3 }}
                     className="h-full"
                   >
-                      <LoginForm role={role} onLoginSuccess={handleLoginSuccess} onBack={handleBackToRoleSelection} />
+                      <LoginForm 
+                        role={role} 
+                        onLoginSuccess={handleLoginSuccess} 
+                        onBack={handleBackToRoleSelection} 
+                        onNavigateToSignup={navigateToSignup}
+                      />
+                  </motion.div>
+                )}
+                
+                {viewState === 'signup' && (
+                  <motion.div
+                    key="signup"
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -50 }}
+                    transition={{ duration: 0.3 }}
+                    className="h-full"
+                  >
+                      <SignUpForm
+                        role={role}
+                        onSignupSuccess={handleLoginSuccess}
+                        onBack={handleBackToRoleSelection}
+                        onNavigateToLogin={navigateToLogin}
+                      />
                   </motion.div>
                 )}
 
