@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import type { UserRole, AppUser } from './chat-widget';
@@ -30,6 +29,25 @@ interface Message {
   isTyping?: boolean;
 }
 
+// SpeechRecognition API interface
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: (event: any) => void;
+  onerror: (event: any) => void;
+  onend: () => void;
+}
+
+declare global {
+    interface Window {
+        SpeechRecognition: any;
+        webkitSpeechRecognition: any;
+    }
+}
+
 export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => void }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
@@ -38,13 +56,52 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
   const [input, setInput] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formType, setFormType] = useState<'application' | 'notice' | null>(null);
-
+  const [isRecording, setIsRecording] = useState(false);
+  
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+  
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        setInput(finalTranscript + interimTranscript);
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        toast({ title: "Voice Error", description: `An error occurred: ${event.error}`, variant: "destructive" });
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
+    } else {
+        console.warn("Speech Recognition not supported in this browser.");
+    }
+  }, [toast]);
 
   const onFormSubmit = (data: any) => {
     setIsFormOpen(false);
@@ -110,6 +167,20 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const handleMicClick = () => {
+    if (!recognitionRef.current) {
+        toast({ title: "Not Supported", description: "Voice input is not supported in your browser.", variant: "destructive" });
+        return;
+    }
+
+    if (isRecording) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+    }
+    setIsRecording(!isRecording);
   };
 
 
@@ -184,11 +255,11 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Mic className="h-5 w-5 text-muted-foreground" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleMicClick}>
+                        <Mic className={cn("h-5 w-5 text-muted-foreground", isRecording && "text-primary animate-pulse")} />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent>Voice Input (Not implemented)</TooltipContent>
+                <TooltipContent>Voice Input</TooltipContent>
             </Tooltip>
             <Button size="icon" onClick={handleSendMessage} disabled={!input.trim()} className="h-8 w-8">
               <Send className="h-5 w-5" />
@@ -258,5 +329,3 @@ function ApplicationPreview({ application }: { application: any }) {
     </div>
   );
 }
-
-    
