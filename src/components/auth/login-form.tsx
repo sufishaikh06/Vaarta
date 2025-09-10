@@ -24,7 +24,7 @@ import { useAuth } from "@/context/auth-context";
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
-  password: z.string().min(6, "Password must be at least 6 characters."),
+  password: z.string().min(1, "Password is required."),
 });
 
 type LoginFormValues = z.infer<typeof formSchema>;
@@ -52,10 +52,8 @@ export function LoginForm({ role, onBack, onNavigateToSignup }: LoginFormProps) 
     setIsLoading(true);
     
     try {
-      // For this prototype, we'll continue to use a generic password check
-      if (data.password !== "password") {
-         throw new Error("Invalid credentials. Please try again.");
-      }
+      // For this prototype, we are not checking the password.
+      // A real application would use Firebase Authentication for secure password handling.
 
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("email", "==", data.email), where("role", "==", role));
@@ -63,7 +61,7 @@ export function LoginForm({ role, onBack, onNavigateToSignup }: LoginFormProps) 
       const querySnapshot = await getDocs(q);
       
       if (querySnapshot.empty) {
-        throw new Error("No user found with that email and role.");
+        throw new Error("Invalid credentials. Please try again.");
       }
 
       // Assuming one user per email/role combo
