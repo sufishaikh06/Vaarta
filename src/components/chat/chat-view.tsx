@@ -1,7 +1,7 @@
 
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import type { UserRole } from './chat-widget';
+import type { UserRole, AppUser } from './chat-widget';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -20,6 +20,7 @@ import { NoticeForm } from '../faculty/notice-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { draftApplication } from '@/ai/flows/application-drafter';
 import { answerQuestion } from '@/ai/flows/rag-flow';
+import { useAuth } from '@/context/auth-context';
 
 interface Message {
   id: string;
@@ -30,6 +31,7 @@ interface Message {
 }
 
 export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => void }) {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     { id: '1', role: 'bot', text: `Welcome, ${role}! How can I help you today?` },
   ]);
@@ -94,7 +96,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     } else {
       // Default to RAG flow
       try {
-        const output = await answerQuestion({ question: userInput });
+        const output = await answerQuestion({ question: userInput, studentId: user?.id });
         addMessage('bot', output.answer);
       } catch (e) {
         console.error(e);

@@ -9,6 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { getAttendanceForStudent } from '@/lib/firebase-services';
 import { z } from 'genkit';
 
 // Define the knowledge base from website content
@@ -38,9 +39,28 @@ The admissions process consists of three main steps:
 - **Biotechnology**: Combines biology with technology to create products for healthcare, agriculture, and environmental applications.
 `;
 
+const getAttendanceStatusTool = ai.defineTool(
+  {
+    name: 'getAttendanceStatus',
+    description: "Get the current attendance status for the logged-in student. This tool returns a summary of the student's attendance records.",
+    inputSchema: z.object({ studentId: z.string().describe("The ID of the student.") }),
+    outputSchema: z.string().describe("A summary of the student's attendance, including subjects, status, and dates."),
+  },
+  async (input) => {
+    const attendanceRecords = await getAttendanceForStudent(input.studentId);
+    if (attendanceRecords.length === 0) {
+      return 'No attendance records found for this student.';
+    }
+    // Simple summary logic. This could be made more sophisticated.
+    const summary = `Here is a summary of your attendance:\n` + attendanceRecords.map(r => `- ${r.subject} on ${new Date(r.date).toLocaleDateString()}: ${r.status}`).join('\n');
+    return summary;
+  }
+);
+
 
 const AnswerQuestionInputSchema = z.object({
-  question: z.string().describe('The user\'s question about the college.'),
+  question: z.string().describe("The user's question about the college."),
+  studentId: z.string().optional().describe("The ID of the logged-in student, if applicable."),
 });
 export type AnswerQuestionInput = z.infer<typeof AnswerQuestionInputSchema>;
 
@@ -57,14 +77,22 @@ const prompt = ai.definePrompt({
   name: 'answerQuestionPrompt',
   input: { schema: AnswerQuestionInputSchema },
   output: { schema: AnswerQuestionOutputSchema },
+  tools: [getAttendanceStatusTool],
   prompt: `You are Vaarta, the AI assistant for Sanjivani College of Engineering.
-Your role is to answer user questions based *only* on the information provided in the knowledge base below.
+Your role is to answer user questions.
+
+If the user asks a general question about the college, answer it based *only* on the information provided in the knowledge base below.
 If the answer is not found in the knowledge base, politely state that you do not have that information. Do not make up answers.
+
+If a student asks about their personal data, like attendance, you MUST use the provided tools to answer. You will be given the student's ID to use with the tool.
 
 **Knowledge Base:**
 ---
 ${knowledgeBase}
 ---
+
+**Student's ID (if applicable):**
+{{{studentId}}}
 
 **User's Question:**
 "{{{question}}}"
