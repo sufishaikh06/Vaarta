@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,9 +17,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import type { UserRole } from "../chat/chat-widget";
+import type { UserRole, AppUser } from "../chat/chat-widget";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -30,14 +32,14 @@ type SignUpFormValues = z.infer<typeof formSchema>;
 
 interface SignUpFormProps {
     role: UserRole;
-    onSignupSuccess: () => void;
     onBack: () => void;
     onNavigateToLogin: () => void;
 }
 
-export function SignUpForm({ role, onSignupSuccess, onBack, onNavigateToLogin }: SignUpFormProps) {
+export function SignUpForm({ role, onBack, onNavigateToLogin }: SignUpFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { login } = useAuth();
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(formSchema),
@@ -51,23 +53,20 @@ export function SignUpForm({ role, onSignupSuccess, onBack, onNavigateToLogin }:
   const onSubmit = async (data: SignUpFormValues) => {
     setIsLoading(true);
     try {
-        const newUser = {
+        const newUser: Omit<AppUser, 'id'> = {
             name: data.name,
             email: data.email,
             role: role,
-            // In a real app, you would hash this password. For the prototype, we store it directly.
-            // Do not do this in production.
-            // password: data.password 
         };
 
         const docRef = await addDoc(collection(db, "users"), newUser);
-        console.log("Document written with ID: ", docRef.id);
         
         toast({
             title: "Account Created!",
             description: "You have been successfully signed up.",
         });
-        onSignupSuccess();
+        
+        login({ ...newUser, id: docRef.id });
 
     } catch (error) {
         console.error("Error adding document: ", error);

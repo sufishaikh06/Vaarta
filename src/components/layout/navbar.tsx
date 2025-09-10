@@ -7,7 +7,8 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Menu, School } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { UserRole } from '@/components/chat/chat-widget';
+import type { UserRole } from '@/components/chat/chat-widget';
+import { useAuth } from '@/context/auth-context';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -18,17 +19,16 @@ const navLinks = [
   { href: '/contact', label: 'Contact' },
 ];
 
-const roleDashboards: Record<UserRole, { href: string; label: string }> = {
+const roleDashboards: Record<Exclude<UserRole, 'guest'>, { href: string; label: string }> = {
     student: { href: '/student-dashboard', label: 'Student Dashboard' },
     faculty: { href: '/faculty-dashboard', label: 'Faculty Dashboard' },
     parent: { href: '/parent-dashboard', label: 'Parent Dashboard' },
-    guest: { href: '/#', label: ''},
 };
 
 export function Navbar() {
   const pathname = usePathname();
-  // This is a placeholder for a real auth state
-  const role: UserRole = 'student'; 
+  const { user } = useAuth();
+  const role = user?.role;
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background">
@@ -52,9 +52,11 @@ export function Navbar() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-            <Button asChild>
-                <Link href={roleDashboards[role].href}>{roleDashboards[role].label}</Link>
-            </Button>
+            {role && role !== 'guest' && (
+              <Button asChild>
+                  <Link href={roleDashboards[role].href}>{roleDashboards[role].label}</Link>
+              </Button>
+            )}
             <Sheet>
                 <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="md:hidden">

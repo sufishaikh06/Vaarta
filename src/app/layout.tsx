@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { ChatWidgetWrapper } from '@/components/chat/chat-widget-wrapper';
+import { AuthProvider } from '@/context/auth-context';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -31,13 +32,15 @@ export default function RootLayout({
           inter.variable
         )}
       >
-        <div className="relative flex min-h-dvh flex-col bg-background">
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
-        <ChatWidgetWrapper />
-        <Toaster />
+        <AuthProvider>
+          <div className="relative flex min-h-dvh flex-col bg-background">
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+          <ChatWidgetWrapper />
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

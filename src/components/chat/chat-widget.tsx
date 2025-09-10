@@ -1,3 +1,4 @@
+
 'use client';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Users, GraduationCap, Building, User, MessageSquare } from 'lucide-react';
@@ -7,30 +8,34 @@ import { cn } from '@/lib/utils';
 import { VaartaLogo } from '../icons';
 import { LoginForm } from '../auth/login-form';
 import { SignUpForm } from '../auth/signup-form';
+import { useAuth } from '@/context/auth-context';
 
 export type UserRole = 'student' | 'faculty' | 'parent' | 'guest';
+export type AppUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+}
 
 type ViewState = 'role-selection' | 'login' | 'signup' | 'chat';
 
 export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
-  const [role, setRole] = useState<UserRole>('guest');
+  const { user, login, logout } = useAuth();
+  const [selectedRole, setSelectedRole] = useState<UserRole>('guest');
   const [viewState, setViewState] = useState<ViewState>('role-selection');
 
-  const handleRoleSelect = (selectedRole: UserRole) => {
-    setRole(selectedRole);
-    if (selectedRole === 'guest') {
-      setViewState('chat');
+  const handleRoleSelect = (role: UserRole) => {
+    setSelectedRole(role);
+    if (role === 'guest') {
+      login({ id: 'guest', name: 'Guest', email: '', role: 'guest' });
     } else {
       setViewState('login');
     }
   };
 
-  const handleLoginSuccess = () => {
-    setViewState('chat');
-  };
-
   const handleLogout = () => {
-    setRole('guest');
+    logout();
     setViewState('role-selection');
   };
   
@@ -41,13 +46,18 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
   const navigateToSignup = () => setViewState('signup');
   const navigateToLogin = () => setViewState('login');
 
-
   const roles = [
     { id: 'student', name: 'Student', icon: <GraduationCap /> },
     { id: 'faculty', name: 'Faculty', icon: <User /> },
     { id: 'parent', name: 'Parent', icon: <Users /> },
     { id: 'guest', name: 'Guest', icon: <Building /> },
   ];
+
+  // Determine the current view
+  let currentView: ViewState = viewState;
+  if (user) {
+    currentView = 'chat';
+  }
 
   return (
     <>
@@ -88,7 +98,7 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
             {/* Main Content */}
             <div className="flex-grow bg-background flex flex-col">
               <AnimatePresence mode="wait">
-                {viewState === 'role-selection' && (
+                {currentView === 'role-selection' && (
                   <motion.div
                     key="role-selection"
                     initial={{ opacity: 0, x: -50 }}
@@ -110,7 +120,7 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
                   </motion.div>
                 )}
 
-                {viewState === 'login' && (
+                {currentView === 'login' && (
                   <motion.div
                     key="login"
                     initial={{ opacity: 0, x: 50 }}
@@ -120,15 +130,14 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
                     className="h-full"
                   >
                       <LoginForm 
-                        role={role} 
-                        onLoginSuccess={handleLoginSuccess} 
+                        role={selectedRole}
                         onBack={handleBackToRoleSelection} 
                         onNavigateToSignup={navigateToSignup}
                       />
                   </motion.div>
                 )}
                 
-                {viewState === 'signup' && (
+                {currentView === 'signup' && (
                   <motion.div
                     key="signup"
                     initial={{ opacity: 0, x: 50 }}
@@ -138,15 +147,14 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
                     className="h-full"
                   >
                       <SignUpForm
-                        role={role}
-                        onSignupSuccess={handleLoginSuccess}
-                        onBack={handleBackToRoleSelection}
+                        role={selectedRole}
+                        onBack={navigateToLogin}
                         onNavigateToLogin={navigateToLogin}
                       />
                   </motion.div>
                 )}
 
-                {viewState === 'chat' && (
+                {currentView === 'chat' && user && (
                   <motion.div
                     key="chat"
                     initial={{ opacity: 0 }}
@@ -154,7 +162,7 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
                     transition={{ duration: 0.3, delay: 0.2 }}
                     className="h-full"
                   >
-                      <ChatView role={role} onLogout={handleLogout} />
+                      <ChatView role={user.role} onLogout={handleLogout} />
                   </motion.div>
                 )}
               </AnimatePresence>

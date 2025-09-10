@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,9 +17,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import type { UserRole } from "../chat/chat-widget";
+import type { UserRole, AppUser } from "../chat/chat-widget";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -29,14 +31,14 @@ type LoginFormValues = z.infer<typeof formSchema>;
 
 interface LoginFormProps {
     role: UserRole;
-    onLoginSuccess: () => void;
     onBack: () => void;
     onNavigateToSignup: () => void;
 }
 
-export function LoginForm({ role, onLoginSuccess, onBack, onNavigateToSignup }: LoginFormProps) {
+export function LoginForm({ role, onBack, onNavigateToSignup }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { login } = useAuth();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(formSchema),
@@ -65,13 +67,14 @@ export function LoginForm({ role, onLoginSuccess, onBack, onNavigateToSignup }: 
       }
 
       // Assuming one user per email/role combo
-      const user = querySnapshot.docs[0].data();
+      const userDoc = querySnapshot.docs[0];
+      const user = { id: userDoc.id, ...userDoc.data() } as AppUser;
       
       toast({
         title: "Login Successful",
         description: `Welcome, ${user.name}!`,
       });
-      onLoginSuccess();
+      login(user);
 
     } catch (error: any) {
        toast({
