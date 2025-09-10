@@ -1,11 +1,12 @@
 
 import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   projectId: 'vaartabot-d2iav',
   appId: '1:907576861315:web:9d34a5a63c39f2e97bb1b6',
-  storageBucket: 'vaartabot-d2iav.firebasestorage.app',
+  storageBucket: 'vaartabot-d2iav.appspot.com',
   apiKey: 'AIzaSyCQYetVzK5qnjUwRLWWHp-RuCxex05ftOk',
   authDomain: 'vaartabot-d2iav.firebaseapp.com',
   messagingSenderId: '907576861315',
@@ -14,5 +15,6 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
+const storage = getStorage(app);
 
-export { app, db };
+export { app, db, storage };
