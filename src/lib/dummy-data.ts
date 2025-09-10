@@ -8,7 +8,7 @@ export const dummyStudentData = {
       { subject: "Data Structures", total: 40, attended: 35 },
       { subject: "Algorithms", total: 40, attended: 38 },
       { subject: "Database Systems", total: 45, attended: 40 },
-      { subject: "Operating Systems", total: 38, attended: 32 },
+      { subject: "Operating Systems", total: 38, attended: 28 },
     ],
     marks: [
       { exam: "Mid-Term", subject: "Data Structures", score: 85 },
