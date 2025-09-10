@@ -6,22 +6,37 @@ import { useState } from 'react';
 import { ChatView } from './chat-view';
 import { cn } from '@/lib/utils';
 import { VaartaLogo } from '../icons';
+import { LoginForm } from '../auth/login-form';
 
 export type UserRole = 'student' | 'faculty' | 'parent' | 'guest';
 
+type ViewState = 'role-selection' | 'login' | 'chat';
+
 export function ChatWidget({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [role, setRole] = useState<UserRole>('guest');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [viewState, setViewState] = useState<ViewState>('role-selection');
 
-  const handleLogin = (selectedRole: UserRole) => {
+  const handleRoleSelect = (selectedRole: UserRole) => {
     setRole(selectedRole);
-    setIsAuthenticated(true);
+    if (selectedRole === 'guest') {
+      setViewState('chat');
+    } else {
+      setViewState('login');
+    }
+  };
+
+  const handleLoginSuccess = () => {
+    setViewState('chat');
   };
 
   const handleLogout = () => {
     setRole('guest');
-    setIsAuthenticated(false);
+    setViewState('role-selection');
   };
+  
+  const handleBackToRoleSelection = () => {
+    setViewState('role-selection');
+  }
 
   const roles = [
     { id: 'student', name: 'Student', icon: <GraduationCap /> },
@@ -56,22 +71,54 @@ export function ChatWidget({ isOpen, onClose }: { isOpen: boolean; onClose: () =
 
           {/* Main Content */}
           <div className="flex-grow bg-background flex flex-col">
-            {!isAuthenticated ? (
-              <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                 <h3 className="text-2xl font-bold text-foreground mb-2">Welcome to Vaarta</h3>
-                 <p className="text-muted-foreground mb-8">Please select your role to get started.</p>
-                 <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
-                    {roles.map((r) => (
-                        <button key={r.id} onClick={() => handleLogin(r.id as UserRole)} className="flex flex-col items-center justify-center gap-2 p-6 bg-secondary hover:bg-accent rounded-lg transition-colors duration-200 group">
-                            <div className="h-12 w-12 text-primary group-hover:scale-110 transition-transform">{r.icon}</div>
-                            <span className="font-semibold text-foreground">{r.name}</span>
-                        </button>
-                    ))}
-                 </div>
-              </div>
-            ) : (
-              <ChatView role={role} onLogout={handleLogout} />
-            )}
+            <AnimatePresence mode="wait">
+              {viewState === 'role-selection' && (
+                 <motion.div
+                  key="role-selection"
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 50 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex flex-col items-center justify-center h-full p-8 text-center"
+                >
+                   <h3 className="text-2xl font-bold text-foreground mb-2">Welcome to Vaarta</h3>
+                   <p className="text-muted-foreground mb-8">Please select your role to get started.</p>
+                   <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
+                      {roles.map((r) => (
+                          <button key={r.id} onClick={() => handleRoleSelect(r.id as UserRole)} className="flex flex-col items-center justify-center gap-2 p-6 bg-secondary hover:bg-accent rounded-lg transition-colors duration-200 group">
+                              <div className="h-12 w-12 text-primary group-hover:scale-110 transition-transform">{r.icon}</div>
+                              <span className="font-semibold text-foreground">{r.name}</span>
+                          </button>
+                      ))}
+                   </div>
+                </motion.div>
+              )}
+
+              {viewState === 'login' && (
+                <motion.div
+                  key="login"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                   className="h-full"
+                >
+                    <LoginForm role={role} onLoginSuccess={handleLoginSuccess} onBack={handleBackToRoleSelection} />
+                </motion.div>
+              )}
+
+              {viewState === 'chat' && (
+                <motion.div
+                  key="chat"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3, delay: 0.2 }}
+                   className="h-full"
+                >
+                    <ChatView role={role} onLogout={handleLogout} />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
       )}
