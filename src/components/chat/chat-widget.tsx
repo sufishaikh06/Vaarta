@@ -1,6 +1,6 @@
 'use client';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Users, GraduationCap, Building, User, MessageSquare } from 'lucide-react';
+import { X, Users, GraduationCap, Building, User } from 'lucide-react';
 import { useState } from 'react';
 import { ChatView } from './chat-view';
 import { cn } from '@/lib/utils';
@@ -65,10 +65,10 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
       {!isOpen && (
         <button
           onClick={onToggle}
-          className="fixed bottom-8 right-8 bg-primary text-primary-foreground rounded-full w-20 h-20 flex items-center justify-center shadow-lg hover:bg-primary/90 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-50"
+          className="fixed bottom-8 right-8 bg-primary text-primary-foreground rounded-full w-20 h-20 flex items-center justify-center shadow-lg hover:bg-primary/90 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-50 overflow-hidden"
           aria-label="Open chat"
         >
-           <Image src="/bot-icon.png" alt="Chat Bot Icon" width={48} height={48} />
+           <Image src="/bot-icon.png" alt="Chat Bot Icon" layout="fill" objectFit="cover" />
         </button>
       )}
 
