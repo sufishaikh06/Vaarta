@@ -17,6 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import type { UserRole } from "../chat/chat-widget";
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -46,20 +48,37 @@ export function SignUpForm({ role, onSignupSuccess, onBack, onNavigateToLogin }:
     },
   });
 
-  const onSubmit = (data: SignUpFormValues) => {
+  const onSubmit = async (data: SignUpFormValues) => {
     setIsLoading(true);
-    // Simulate API call for signup
-    setTimeout(() => {
-      // In a real app, you would create a new user in your database.
-      // For the prototype, we'll just show a success message and proceed.
-      console.log("New user signed up:", data);
-      toast({
-        title: "Account Created!",
-        description: "You have been successfully signed up.",
-      });
-      onSignupSuccess();
-      setIsLoading(false);
-    }, 1000);
+    try {
+        const newUser = {
+            name: data.name,
+            email: data.email,
+            role: role,
+            // In a real app, you would hash this password. For the prototype, we store it directly.
+            // Do not do this in production.
+            // password: data.password 
+        };
+
+        const docRef = await addDoc(collection(db, "users"), newUser);
+        console.log("Document written with ID: ", docRef.id);
+        
+        toast({
+            title: "Account Created!",
+            description: "You have been successfully signed up.",
+        });
+        onSignupSuccess();
+
+    } catch (error) {
+        console.error("Error adding document: ", error);
+        toast({
+            title: "Sign Up Failed",
+            description: "Could not create your account. Please try again.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (

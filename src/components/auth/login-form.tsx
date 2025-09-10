@@ -17,6 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import type { UserRole } from "../chat/chat-widget";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -44,33 +46,42 @@ export function LoginForm({ role, onLoginSuccess, onBack, onNavigateToSignup }: 
     },
   });
 
-  const onSubmit = (data: LoginFormValues) => {
+  const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-    // Simulate API call for login
-    setTimeout(() => {
-      // In a real app, you would validate credentials here.
-      // For the prototype, we'll just check for a mock user.
-      const mockEmails: Record<string, string> = {
-        student: "rohan.sharma@example.com",
-        faculty: "priya.mehta@example.com",
-        parent: "anand.sharma@example.com",
+    
+    try {
+      // For this prototype, we'll continue to use a generic password check
+      if (data.password !== "password") {
+         throw new Error("Invalid credentials. Please try again.");
       }
 
-      if (data.email === mockEmails[role] && data.password === "password") {
-        toast({
-          title: "Login Successful",
-          description: `Welcome, ${role}!`,
-        });
-        onLoginSuccess();
-      } else {
-        toast({
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("email", "==", data.email), where("role", "==", role));
+      
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        throw new Error("No user found with that email and role.");
+      }
+
+      // Assuming one user per email/role combo
+      const user = querySnapshot.docs[0].data();
+      
+      toast({
+        title: "Login Successful",
+        description: `Welcome, ${user.name}!`,
+      });
+      onLoginSuccess();
+
+    } catch (error: any) {
+       toast({
           title: "Login Failed",
-          description: "Invalid credentials. Please try again.",
+          description: error.message || "An error occurred during login.",
           variant: "destructive",
         });
-        setIsLoading(false);
-      }
-    }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
