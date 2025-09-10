@@ -71,10 +71,9 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
         >
           {/* To use your custom icon:
               1. Add your image file (e.g., 'bot-icon.png') to the 'public' folder.
-              2. Replace the <MessageSquare> icon below with:
-                 <Image src="/bot-icon.png" alt="Chat Bot Icon" width={48} height={48} />
+              2. The code below is already set up to use it.
           */}
-          <MessageSquare className="h-10 w-10" />
+           <Image src="/bot-icon.png" alt="Chat Bot Icon" width={48} height={48} />
         </button>
       )}
 
