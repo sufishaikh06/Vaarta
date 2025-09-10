@@ -4,7 +4,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { VaartaLogo } from '@/components/icons';
-import { ArrowRight, BookOpen, Briefcase, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, Briefcase, Users, Cpu, Laptop, Cog, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -70,10 +70,10 @@ export default function HomePage() {
             </p>
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { name: 'Computer Engineering', icon: <Users /> },
-                { name: 'Information Technology', icon: <Briefcase /> },
-                { name: 'Mechanical Engineering', icon: <BookOpen /> },
-                { name: 'Civil Engineering', icon: <VaartaLogo /> },
+                { name: 'Computer Engineering', icon: <Cpu /> },
+                { name: 'Information Technology', icon: <Laptop /> },
+                { name: 'Mechanical Engineering', icon: <Cog /> },
+                { name: 'Civil Engineering', icon: <Wrench /> },
               ].map((dept) => (
                 <Card key={dept.name}>
                   <CardHeader className="items-center">
