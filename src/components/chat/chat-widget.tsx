@@ -1,4 +1,3 @@
-
 'use client';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Users, GraduationCap, Building, User, MessageSquare } from 'lucide-react';
@@ -69,10 +68,6 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
           className="fixed bottom-8 right-8 bg-primary text-primary-foreground rounded-full w-20 h-20 flex items-center justify-center shadow-lg hover:bg-primary/90 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-50"
           aria-label="Open chat"
         >
-          {/* To use your custom icon:
-              1. Add your image file (e.g., 'bot-icon.png') to the 'public' folder.
-              2. The code below is already set up to use it.
-          */}
            <Image src="/bot-icon.png" alt="Chat Bot Icon" width={48} height={48} />
         </button>
       )}
