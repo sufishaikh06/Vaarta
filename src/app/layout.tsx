@@ -4,6 +4,9 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from "@/components/ui/toaster"
+import { Navbar } from '@/components/layout/navbar';
+import { Footer } from '@/components/layout/footer';
+import { ChatWidgetWrapper } from '@/components/chat/chat-widget-wrapper';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -11,8 +14,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Vaarta - Your College AI Assistant',
-  description: 'A multilingual chatbot for students, faculty, and parents.',
+  title: 'Sanjivani College of Engineering',
+  description: 'A prototype website for the Vaarta project.',
 };
 
 export default function RootLayout({
@@ -28,7 +31,12 @@ export default function RootLayout({
           inter.variable
         )}
       >
-        {children}
+        <div className="relative flex min-h-dvh flex-col bg-background">
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </div>
+        <ChatWidgetWrapper />
         <Toaster />
       </body>
     </html>

@@ -1,64 +1,100 @@
 
 'use client';
-import { useState } from 'react';
-import { ChatWidget } from '@/components/chat/chat-widget';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { VaartaLogo } from '@/components/icons';
-import { MessageSquare } from 'lucide-react';
+import { ArrowRight, BookOpen, Briefcase, Users } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
 
-export default function Home() {
-  const [isChatOpen, setIsChatOpen] = useState(false);
-
+export default function HomePage() {
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-blue-50">
-      <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <nav className="flex items-center justify-between">
-          <a href="#" className="flex items-center gap-2">
-            <VaartaLogo className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold tracking-tight text-gray-800">Vaarta</span>
-          </a>
-          <Button onClick={() => setIsChatOpen(true)}>Launch Chat</Button>
-        </nav>
-      </header>
+    <div className="flex flex-col min-h-screen">
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="relative h-[60vh] md:h-[70vh] flex items-center justify-center text-center text-white">
+          <Image
+            src="https://picsum.photos/seed/sanjivani-hero/1800/800"
+            alt="Sanjivani College Campus"
+            fill
+            className="object-cover -z-10 brightness-50"
+            data-ai-hint="college campus building"
+          />
+          <div className="container px-4 md:px-6">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter">
+              Welcome to Sanjivani College of Engineering
+            </h1>
+            <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-gray-200">
+              Fostering innovation and excellence in engineering education for over four decades.
+            </p>
+            <Button asChild size="lg" className="mt-8">
+              <Link href="/admissions">
+                Apply Now <ArrowRight className="ml-2" />
+              </Link>
+            </Button>
+          </div>
+        </section>
 
-      <main className="flex-grow flex items-center">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+        {/* About Us Section */}
+        <section className="py-12 md:py-20 bg-background">
+          <div className="container px-4 md:px-6 grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h1 className="text-5xl md:text-6xl font-bold tracking-tighter text-gray-800 leading-tight">
-                Your College, <span className="text-primary">Smarter.</span>
-              </h1>
-              <p className="mt-4 max-w-xl text-lg md:text-xl text-muted-foreground">
-                Welcome to Vaarta, the AI-powered assistant for seamless college communication. Get instant answers, automate tasks, and stay connected.
+              <h2 className="text-3xl font-bold tracking-tight text-primary">About Sanjivani</h2>
+              <p className="mt-4 text-muted-foreground">
+                Sanjivani College of Engineering, established in 1983, is a premier institute dedicated to providing high-quality technical education. Our vision is to be a leading center of learning, research, and innovation, nurturing professionals who can make a significant contribution to society.
               </p>
-              <Button size="lg" className="mt-8" onClick={() => setIsChatOpen(true)}>
-                Get Started
+              <Button asChild variant="outline" className="mt-6">
+                <Link href="/about">Learn More</Link>
               </Button>
             </div>
-             <div className="hidden md:block">
-               <img src="https://picsum.photos/seed/college/600/500" data-ai-hint="college campus" alt="College Campus" className="rounded-xl shadow-2xl" />
+            <div className="hidden md:block">
+              <Image
+                src="https://picsum.photos/seed/sanjivani-about/600/400"
+                alt="Students collaborating"
+                width={600}
+                height={400}
+                className="rounded-xl shadow-lg"
+                data-ai-hint="students collaborating classroom"
+              />
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* Departments Section */}
+        <section className="py-12 md:py-20 bg-secondary">
+          <div className="container px-4 md:px-6 text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">Our Departments</h2>
+            <p className="mt-2 max-w-2xl mx-auto text-muted-foreground">
+              Explore our diverse range of engineering disciplines.
+            </p>
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { name: 'Computer Engineering', icon: <Users /> },
+                { name: 'Information Technology', icon: <Briefcase /> },
+                { name: 'Mechanical Engineering', icon: <BookOpen /> },
+                { name: 'Civil Engineering', icon: <VaartaLogo /> },
+              ].map((dept) => (
+                <Card key={dept.name}>
+                  <CardHeader className="items-center">
+                    <div className="p-4 bg-primary/10 rounded-full text-primary">
+                      {dept.icon}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <CardTitle className="text-lg">{dept.name}</CardTitle>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+             <Button asChild variant="link" className="mt-6 text-primary">
+                <Link href="/departments">
+                  View All Departments <ArrowRight className="ml-1" />
+                </Link>
+              </Button>
+          </div>
+        </section>
       </main>
-
-      {/* Floating Chat Button */}
-      {!isChatOpen && (
-        <button
-          onClick={() => setIsChatOpen(true)}
-          className="fixed bottom-8 right-8 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:bg-primary/90 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          aria-label="Open chat"
-        >
-          <MessageSquare className="h-8 w-8" />
-        </button>
-      )}
-
-      {/* Chat Widget */}
-      <ChatWidget isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
-
-       <footer className="py-6 text-center text-muted-foreground text-sm">
-        <p>&copy; {new Date().getFullYear()} Vaarta. A Smart India Hackathon Project.</p>
-      </footer>
     </div>
   );
 }
