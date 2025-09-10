@@ -19,6 +19,7 @@ import { ApplicationForm } from '../student/application-form';
 import { NoticeForm } from '../faculty/notice-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { draftApplication } from '@/ai/flows/application-drafter';
+import { answerQuestion } from '@/ai/flows/rag-flow';
 
 interface Message {
   id: string;
@@ -69,35 +70,37 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     setInput('');
     addTypingIndicator();
 
-    // Simulate bot response with command handling
-    setTimeout(async () => {
-      // Command: "apply for leave"
-      if (userInput.toLowerCase().includes('apply for leave')) {
-        if (role === 'student') {
-          try {
-            const output = await draftApplication({ userInput });
-            addMessage('bot', undefined, <ApplicationPreview application={output} />);
-          } catch (e) {
-            console.error(e);
-            addMessage('bot', 'Sorry, I had trouble drafting the application. Please try again.');
-          }
-        } else {
-          addMessage('bot', "This feature is only available for students.");
-        }
-      } 
-      // Command: "post notice"
-      else if (userInput.toLowerCase().includes('post notice')) {
-        if (role === 'faculty') {
-          setFormType('notice');
-          setIsFormOpen(true);
-          setMessages(prev => prev.filter(m => !m.isTyping));
-        } else {
-          addMessage('bot', "This feature is only available for faculty members.");
+    // Command/intent handling
+    if (userInput.toLowerCase().includes('apply for leave')) {
+      if (role === 'student') {
+        try {
+          const output = await draftApplication({ userInput });
+          addMessage('bot', undefined, <ApplicationPreview application={output} />);
+        } catch (e) {
+          console.error(e);
+          addMessage('bot', 'Sorry, I had trouble drafting the application. Please try again.');
         }
       } else {
-        addMessage('bot', `I'm processing your request: "${userInput}". For this demo, I can respond to 'apply for leave' and 'post notice'.`);
+        addMessage('bot', "This feature is only available for students.");
       }
-    }, 1000);
+    } else if (userInput.toLowerCase().includes('post notice')) {
+      if (role === 'faculty') {
+        setFormType('notice');
+        setIsFormOpen(true);
+        setMessages(prev => prev.filter(m => !m.isTyping));
+      } else {
+        addMessage('bot', "This feature is only available for faculty members.");
+      }
+    } else {
+      // Default to RAG flow
+      try {
+        const output = await answerQuestion({ question: userInput });
+        addMessage('bot', output.answer);
+      } catch (e) {
+        console.error(e);
+        addMessage('bot', 'Sorry, I am having trouble connecting to my knowledge base. Please try again in a moment.');
+      }
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
