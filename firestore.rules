@@ -1,53 +1,90 @@
-
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // Helper functions
-    function isAuth() {
+    function isSignedIn() {
       return request.auth != null;
     }
 
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
+    function isStudent() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';
     }
 
-    function isRole(role) {
-      return isAuth() && getUserData(request.auth.uid).role == role;
+    function isFaculty() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'faculty';
     }
 
-    // Users: Can read their own data. Admins can read/write all.
+    function isParent() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'parent';
+    }
+    
+    function isChild(studentId) {
+      let parentData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return parentData.child_id == studentId;
+    }
+
+    // Users: Can read their own profile. Can create a profile.
     match /users/{userId} {
-      allow read: if isAuth() && (request.auth.uid == userId || isRole('admin'));
-      allow write: if isRole('admin');
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId || 
+        (isParent() && isChild(userId)) ||
+        isFaculty()
+      );
+      allow create: if !isSignedIn(); // Allow user creation during signup
+      allow update: if request.auth.uid == userId;
     }
 
-    // Notices, Events, Timetable, Documents: Publicly readable, faculty/admin can write
-    match /{collection}/{docId}
-      where collection in ['notices', 'events', 'timetable', 'documents'] {
-      allow read: if true;
-      allow write: if isRole('faculty') || isRole('admin');
+    // Attendance: Students can read their own. Parents can read their child's. Faculty can read/write.
+    match /attendance/{attId} {
+      allow read: if isSignedIn() && (
+        get(/databases/$(database)/documents/attendance/$(attId)).data.student_id == request.auth.uid ||
+        (isParent() && isChild(get(/databases/$(database)/documents/attendance/$(attId)).data.student_id)) ||
+        isFaculty()
+      );
+      allow write: if isFaculty();
     }
 
-    // Student-specific data: Attendance, Marks
-    // Students can read their own data. Parents can read their child's data. Faculty can read/write.
-    match /{collection}/{docId}
-      where collection in ['attendance', 'marks'] {
-      allow read: if (isRole('student') && resource.data.student_id == request.auth.uid) ||
-                     (isRole('parent') && resource.data.student_id == getUserData(request.auth.uid).child_id) ||
-                     isRole('faculty') ||
-                     isRole('admin');
-      allow create: if isRole('faculty') || isRole('admin');
-      allow update, delete: if isRole('faculty') || isRole('admin');
+    // Marks: Students can read their own. Parents can read their child's. Faculty can read/write.
+    match /marks/{markId} {
+      allow read: if isSignedIn() && (
+        get(/databases/$(database)/documents/marks/$(markId)).data.student_id == request.auth.uid ||
+        (isParent() && isChild(get(/databases/$(database)/documents/marks/$(markId)).data.student_id)) ||
+        isFaculty()
+      );
+      allow write: if isFaculty();
     }
-
-    // Applications: Students can create. Faculty can read/update.
+    
+    // Applications: Students can create/read their own. Faculty can read/update assigned ones.
     match /applications/{appId} {
-      allow create: if isRole('student') && request.resource.data.student_id == request.auth.uid;
-      allow read, update: if (isRole('student') && resource.data.student_id == request.auth.uid) ||
-                             (isRole('faculty') && resource.data.faculty_id == request.auth.uid) ||
-                             isRole('admin');
-      allow delete: if isRole('admin');
+      allow read: if isSignedIn() && (
+        get(/databases/$(database)/documents/applications/$(appId)).data.student_id == request.auth.uid ||
+        get(/databases/$(database)/documents/applications/$(appId)).data.faculty_id == request.auth.uid
+      );
+      allow create: if isStudent();
+      allow update: if isFaculty(); // Faculty can update status
+    }
+
+    // Notices, Timetable, Documents, Events: Read-only for all signed-in users, writable by faculty.
+    match /notices/{noticeId} {
+      allow read: if isSignedIn();
+      allow write: if isFaculty();
+    }
+    
+    match /timetable/{ttId} {
+      allow read: if isSignedIn();
+      allow write: if isFaculty();
+    }
+
+    match /documents/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isFaculty();
+    }
+
+    match /events/{eventId} {
+      allow read: if isSignedIn();
+      allow write: if isFaculty();
     }
   }
 }
