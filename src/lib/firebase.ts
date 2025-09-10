@@ -1,7 +1,7 @@
 'use client';
 
 import { initializeApp, getApp, getApps } from 'firebase/app';
-import { getFirestore } "from" 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   projectId: 'vaartabot-d2iav',
