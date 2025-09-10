@@ -32,7 +32,7 @@ type NoticeFormValues = z.infer<typeof noticeSchema>;
 const notesSchema = z.object({
   subject: z.string().min(1, "Please select a subject."),
   title: z.string().min(5, "Title is required."),
-  file: z.instanceof(FileList).refine(files => files?.length === 1, "File is required."),
+  file: z.any().refine((files) => files?.length === 1, "File is required."),
 });
 
 type NotesFormValues = z.infer<typeof notesSchema>;
@@ -237,6 +237,7 @@ export default function FacultyDashboardPage() {
                                                 <SelectContent>
                                                     <SelectItem value="Data Structures">Data Structures</SelectItem>
                                                     <SelectItem value="Algorithms">Algorithms</SelectItem>
+
                                                     <SelectItem value="Database Systems">Database Systems</SelectItem>
                                                     <SelectItem value="Operating Systems">Operating Systems</SelectItem>
                                                 </SelectContent>
@@ -251,14 +252,15 @@ export default function FacultyDashboardPage() {
                                             <FormMessage />
                                         </FormItem>
                                     )} />
-                                     <FormField control={notesForm.control} name="file" render={({ field: { onChange, ...field } }) => (
+                                     <FormField control={notesForm.control} name="file" render={({ field: { onChange, value, ...rest } }) => (
                                         <FormItem>
                                             <FormLabel>File</FormLabel>
                                             <FormControl>
                                                 <Input 
                                                     type="file" 
                                                     accept=".pdf,.doc,.docx,.ppt,.pptx"
-                                                    onChange={(e) => onChange(e.target.files)} 
+                                                    onChange={(e) => onChange(e.target.files)}
+                                                    {...rest}
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -278,3 +280,5 @@ export default function FacultyDashboardPage() {
          </div>
     );
 }
+
+    
