@@ -1,0 +1,6 @@
+Please upload your website's image files into this directory.
+
+For example, you can add files like:
+- hero.jpg
+- about-us.png
+- logo.svg
