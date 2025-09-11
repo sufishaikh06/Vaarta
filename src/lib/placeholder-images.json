@@ -50,7 +50,7 @@
       "aiHint": "civil engineering bridge"
     },
     "chemical": {
-      "src": "https://picsum.photos/seed/sanjivani-chem/400/250",
+      "src": "/images/chem-dept.jpg",
       "width": 400,
       "height": 250,
       "aiHint": "chemical engineering lab"
