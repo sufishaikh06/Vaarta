@@ -44,7 +44,7 @@
       "aiHint": "mechanical engineering gears"
     },
     "civil": {
-      "src": "https://picsum.photos/seed/sanjivani-civil/400/250",
+      "src": "/images/civil-dept.webp",
       "width": 400,
       "height": 250,
       "aiHint": "civil engineering bridge"
@@ -67,7 +67,7 @@
     "infosys": { "alt": "Infosys logo", "src": "https://asset.brandfetch.io/idq5d70Mxf/id54y6O2i0.svg?updated=1721033481682" },
     "wipro": { "alt": "Wipro logo", "src": "https://asset.brandfetch.io/idq5d70Mxf/id54y6O2i0.svg?updated=1721033481682" },
     "cognizant": { "alt": "Cognizant logo", "src": "https://asset.brandfetch.io/idq5d70Mxf/id54y6O2i0.svg?updated=1721033481682" },
-    "capgemini": { "alt": "Capgemini logo", "src": "https://asset.brandfetch.io/idq5d70Mxf/id54y6O2i0.svg?updated=1721033481682" },
+    "capgemini": { "alt": "Capgemini logo", "src": "https://asset.brandfetch.io/idq5d70Mxf/id54y6O2i0.svg?updated=17210ous" },
     "accenture": { "alt": "Accenture logo", "src": "https://asset.brandfetch.io/idq5d70Mxf/id54y6O2i0.svg?updated=1721033481682" },
     "tech-mahindra": { "alt": "Tech Mahindra logo", "src": "https://asset.brandfetch.io/idq5d70Mxf/id54y6O2i0.svg?updated=1721033481682" },
     "hcl": { "alt": "HCL logo", "src": "https://asset.brandfetch.io/idq5d70Mxf/id54y6O2i0.svg?updated=1721033481682" }
@@ -80,5 +80,8 @@
   },
   "chatbot": {
       "fabIcon": "/bot-icon.png"
+  },
+  "public": {
+    "images": {}
   }
 }
