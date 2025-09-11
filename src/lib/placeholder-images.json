@@ -8,7 +8,7 @@
       "aiHint": "college entrance"
     },
     "about": {
-      "src": "https://picsum.photos/seed/sanjivani-about/600/400",
+      "src": "/images/About-Us.jpeg",
       "width": 600,
       "height": 400,
       "alt": "Students collaborating",
