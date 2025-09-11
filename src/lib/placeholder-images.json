@@ -56,7 +56,7 @@
       "aiHint": "chemical engineering lab"
     },
     "biotech": {
-      "src": "https://picsum.photos/seed/sanjivani-biotech/400/250",
+      "src": "/images/bio-dept.jpg",
       "width": 400,
       "height": 250,
       "aiHint": "biotechnology dna strand"
@@ -82,6 +82,8 @@
       "fabIcon": "/bot-icon.png"
   },
   "public": {
-    "images": {}
+    "images": {
+      "placeholder.txt": "This folder is for your images. Upload them here."
+    }
   }
 }
