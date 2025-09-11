@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +38,7 @@ interface SignUpFormProps {
 
 export function SignUpForm({ role, onBack, onNavigateToLogin }: SignUpFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const { login } = useAuth();
 
@@ -123,7 +124,23 @@ export function SignUpForm({ role, onBack, onNavigateToLogin }: SignUpFormProps)
                     <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                        <Input type="password" placeholder="Create a password" {...field} />
+                        <div className="relative">
+                            <Input 
+                                type={showPassword ? "text" : "password"} 
+                                placeholder="Create a password" 
+                                {...field}
+                                className="pr-10" 
+                            />
+                            <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="icon" 
+                                className="absolute top-1/2 right-2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                                onClick={() => setShowPassword(prev => !prev)}
+                            >
+                                {showPassword ? <EyeOff /> : <Eye />}
+                            </Button>
+                        </div>
                     </FormControl>
                     <FormMessage />
                     </FormItem>
