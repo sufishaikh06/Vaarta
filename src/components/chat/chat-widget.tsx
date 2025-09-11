@@ -1,3 +1,4 @@
+
 'use client';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Users, GraduationCap, Building, User } from 'lucide-react';
@@ -80,6 +81,7 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
             exit={{ opacity: 0, y: 100 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="fixed bottom-0 right-0 md:bottom-8 md:right-8 w-full h-full md:w-[440px] md:h-[80vh] md:max-h-[700px] bg-card border border-border rounded-xl shadow-2xl flex flex-col z-50 overflow-hidden"
+            onWheel={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <header className="flex items-center justify-between p-4 border-b bg-background">
@@ -96,7 +98,7 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
             </header>
 
             {/* Main Content */}
-            <div className="flex-grow bg-background flex flex-col">
+            <div className="flex-grow bg-background flex flex-col overflow-y-auto">
               <AnimatePresence mode="wait">
                 {currentView === 'role-selection' && (
                   <motion.div
@@ -160,7 +162,7 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.3, delay: 0.2 }}
-                    className="h-full"
+                    className="h-full flex flex-col"
                   >
                       <ChatView role={user.role} onLogout={handleLogout} />
                   </motion.div>

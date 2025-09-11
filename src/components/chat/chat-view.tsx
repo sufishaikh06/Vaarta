@@ -187,7 +187,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
 
   return (
     <TooltipProvider>
-    <div className="flex-grow flex flex-col h-full">
+    <div className="flex-grow flex flex-col h-full bg-card">
       {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg) => (
