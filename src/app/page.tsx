@@ -18,10 +18,10 @@ export default function HomePage() {
             src="https://picsum.photos/seed/sanjivani-hero/1800/800"
             alt="Sanjivani College Campus"
             fill
-            className="object-cover -z-10 brightness-50"
+            className="object-cover brightness-50"
             data-ai-hint="college campus building"
           />
-          <div className="container px-4 md:px-6">
+          <div className="container px-4 md:px-6 relative z-10">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter">
               Welcome to Sanjivani College of Engineering
             </h1>
