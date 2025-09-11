@@ -60,10 +60,9 @@ const getAttendanceStatusTool = ai.defineTool(
   async (input) => {
     const attendanceRecords = await getAttendanceForStudent(input.studentId);
     if (attendanceRecords.length === 0) {
-      return 'No attendance records found for this student.';
+      return 'No attendance records found for this student. Please check if you have any classes logged.';
     }
-    // This simple summary is just an example.
-    const summary = `Here is a summary of your attendance:\n` + attendanceRecords.map(r => `- ${r.subject} on ${new Date(r.date).toLocaleDateString()}: ${r.status}`).join('\n');
+    const summary = `Here is a summary of your recent attendance:\n` + attendanceRecords.map(r => `- ${r.subject} on ${new Date(r.date).toLocaleDateString()}: ${r.status}`).join('\n');
     return summary;
   }
 );
@@ -110,8 +109,8 @@ Your role is to answer user questions accurately and concisely.
 2.  For general questions about the college (e.g., "what is the admission process?", "tell me about placements"), you MUST answer based *only* on the information provided in the **Knowledge Base** below.
 3.  If the answer is not found in the Knowledge Base, you MUST state that you do not have that information. DO NOT invent answers or use external knowledge.
 4.  For questions about personal data (e.g., "what is my attendance?", "what subjects do I teach?"), you MUST use the provided tools.
-    - If the user role is 'student' and they ask about attendance, use the \`getAttendanceStatus\` tool with the provided \`userId\`.
-    - If the user role is 'faculty' and they ask about their info, use the \`getFacultyInfo\` tool with the provided \`userId\`.
+    - If the user role is 'student' and they ask about attendance, use the \`getAttendanceStatus\` tool with the provided \`userId\` as the 'studentId' parameter.
+    - If the user role is 'faculty' and they ask about their info, use the \`getFacultyInfo\` tool with the provided \`userId\` as the 'facultyId' parameter.
 5.  If the user asks for personal data but is not logged in (i.e., no \`userId\` is provided), you MUST tell them they need to log in to access that information.
 6.  Be polite, professional, and helpful in all your responses.
 
@@ -136,20 +135,10 @@ const answerQuestionFlow = ai.defineFlow(
     outputSchema: AnswerQuestionOutputSchema,
   },
   async (input) => {
-    // If the user is a student, we map their userId to the studentId field for the tool.
-    if (input.userRole === 'student') {
-        const studentInput = { ...input, studentId: input.userId };
-        const { output } = await prompt(studentInput);
-        return output!;
-    }
-    // If the user is faculty, we map their userId to the facultyId field for the tool.
-    if (input.userRole === 'faculty') {
-        const facultyInput = { ...input, facultyId: input.userId };
-        const { output } = await prompt(facultyInput);
-        return output!;
-    }
-
-    const { output } = await prompt(input);
+    // This mapping allows the prompt to use a generic 'userId' from the frontend,
+    // and we can pass the correct parameter name to the tool.
+    const toolInput = { ...input, studentId: input.userId, facultyId: input.userId };
+    const { output } = await prompt(toolInput);
     return output!;
   }
 );
