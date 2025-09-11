@@ -59,11 +59,15 @@ const getAttendanceStatusTool = ai.defineTool(
   },
   async (input) => {
     const attendanceRecords = await getAttendanceForStudent(input.studentId);
-    if (attendanceRecords.length === 0) {
-      return 'No attendance records found for this student. Please check if you have any classes logged.';
+    if (!attendanceRecords || attendanceRecords.length === 0) {
+      return "I couldn't find any attendance records for you. Please check if you have any classes logged.";
     }
-    const summary = `Here is a summary of your recent attendance:\n` + attendanceRecords.map(r => `- ${r.subject} on ${new Date(r.date).toLocaleDateString()}: ${r.status}`).join('\n');
-    return summary;
+
+    const summary = attendanceRecords
+      .map(r => `- On ${new Date(r.date).toLocaleDateString()}, you were marked **${r.status}** for **${r.subject}**.`)
+      .join('\n');
+
+    return `Here is a summary of your recent attendance:\n${summary}`;
   }
 );
 
