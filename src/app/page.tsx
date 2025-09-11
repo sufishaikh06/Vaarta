@@ -7,19 +7,23 @@ import { VaartaLogo } from '@/components/icons';
 import { ArrowRight, BookOpen, Briefcase, Users, Cpu, Laptop, Cog, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import imageData from '@/lib/placeholder-images.json';
 
 export default function HomePage() {
+  const heroImage = imageData.homepage.hero;
+  const aboutImage = imageData.homepage.about;
+
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative h-[60vh] md:h-[70vh] flex items-center justify-center text-center text-white">
           <Image
-            src="https://picsum.photos/seed/sanjivani-hero/1800/800"
-            alt="Sanjivani College Campus"
+            src={heroImage.src}
+            alt={heroImage.alt}
             fill
             className="object-cover brightness-50"
-            data-ai-hint="college campus building"
+            data-ai-hint={heroImage.aiHint}
           />
           <div className="container px-4 md:px-6 relative z-10">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter">
@@ -50,12 +54,12 @@ export default function HomePage() {
             </div>
             <div className="hidden md:block">
               <Image
-                src="https://picsum.photos/seed/sanjivani-about/600/400"
-                alt="Students collaborating"
-                width={600}
-                height={400}
+                src={aboutImage.src}
+                alt={aboutImage.alt}
+                width={aboutImage.width}
+                height={aboutImage.height}
                 className="rounded-xl shadow-lg"
-                data-ai-hint="students collaborating classroom"
+                data-ai-hint={aboutImage.aiHint}
               />
             </div>
           </div>

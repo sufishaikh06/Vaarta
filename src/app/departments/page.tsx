@@ -2,49 +2,62 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Cog, Cpu, Dna, FlaskConical, Laptop, Wrench } from "lucide-react";
 import Image from "next/image";
+import imageData from '@/lib/placeholder-images.json';
 
 const departments = [
   {
     name: "Computer Engineering",
     description: "Focuses on the design, development, and application of computing systems. Covers subjects like AI, machine learning, and cybersecurity.",
     icon: <Cpu />,
-    image: "https://picsum.photos/seed/sanjivani-cs/400/250",
-    aiHint: "computer science students"
+    image: imageData.departments.computer.src,
+    width: imageData.departments.computer.width,
+    height: imageData.departments.computer.height,
+    aiHint: imageData.departments.computer.aiHint
   },
   {
     name: "Information Technology",
     description: "Deals with the use of computers and software to manage information. Specializations include data science, cloud computing, and IoT.",
     icon: <Laptop />,
-    image: "https://picsum.photos/seed/sanjivani-it/400/250",
-    aiHint: "information technology office"
+    image: imageData.departments.it.src,
+    width: imageData.departments.it.width,
+    height: imageData.departments.it.height,
+    aiHint: imageData.departments.it.aiHint
   },
   {
     name: "Mechanical Engineering",
     description: "The branch that applies principles of engineering, physics, and materials science for the design and manufacturing of mechanical systems.",
     icon: <Cog />,
-    image: "https://picsum.photos/seed/sanjivani-mech/400/250",
-    aiHint: "mechanical engineering gears"
+    image: imageData.departments.mechanical.src,
+    width: imageData.departments.mechanical.width,
+    height: imageData.departments.mechanical.height,
+    aiHint: imageData.departments.mechanical.aiHint
   },
   {
     name: "Civil Engineering",
     description: "A professional engineering discipline that deals with the design, construction, and maintenance of the physical and naturally built environment.",
     icon: <Wrench />,
-    image: "https://picsum.photos/seed/sanjivani-civil/400/250",
-    aiHint: "civil engineering bridge"
+    image: imageData.departments.civil.src,
+    width: imageData.departments.civil.width,
+    height: imageData.departments.civil.height,
+    aiHint: imageData.departments.civil.aiHint
   },
    {
     name: "Chemical Engineering",
     description: "Involves the production and manufacturing of products through chemical processes. This includes designing equipment, systems, and processes.",
     icon: <FlaskConical />,
-    image: "https://picsum.photos/seed/sanjivani-chem/400/250",
-    aiHint: "chemical engineering lab"
+    image: imageData.departments.chemical.src,
+    width: imageData.departments.chemical.width,
+    height: imageData.departments.chemical.height,
+    aiHint: imageData.departments.chemical.aiHint
   },
   {
     name: "Biotechnology",
     description: "Combines biology with technology to create products for healthcare, agriculture, and environmental applications.",
     icon: <Dna />,
-    image: "https://picsum.photos/seed/sanjivani-biotech/400/250",
-    aiHint: "biotechnology dna strand"
+    image: imageData.departments.biotech.src,
+    width: imageData.departments.biotech.width,
+    height: imageData.departments.biotech.height,
+aiHint: imageData.departments.biotech.aiHint
   },
 ];
 
@@ -64,8 +77,8 @@ export default function DepartmentsPage() {
                         <Image
                             src={dept.image}
                             alt={dept.name}
-                            width={400}
-                            height={250}
+                            width={dept.width}
+                            height={dept.height}
                             className="w-full h-48 object-cover"
                             data-ai-hint={dept.aiHint}
                         />

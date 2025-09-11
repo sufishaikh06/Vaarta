@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -10,6 +11,7 @@ import { Button } from '../ui/button';
 import { UserRole } from '@/app/chat/page';
 import { textToSpeech } from '@/ai/flows/tts';
 import { useToast } from '@/hooks/use-toast';
+import imageData from '@/lib/placeholder-images.json';
 
 
 interface Message {
@@ -26,7 +28,7 @@ export function ChatLayout({ role }: { role: UserRole }) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isFabOpen, setIsFabOpen] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState<number | null>(null);
-  const [audioLoading, setAudioLoading] = useState<number | null>(null);
+  const [audioLoading, setAudioLoading]_useState<number | null>(null);
   
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -105,7 +107,7 @@ export function ChatLayout({ role }: { role: UserRole }) {
           >
             {message.role !== 'user' && (
                <Avatar className="h-8 w-8">
-                 <AvatarImage src="https://picsum.photos/seed/bot/40/40" alt="Bot" />
+                 <AvatarImage src={imageData.avatars.bot} alt="Bot" />
                  <AvatarFallback>V</AvatarFallback>
                </Avatar>
             )}
@@ -129,7 +131,7 @@ export function ChatLayout({ role }: { role: UserRole }) {
             </div>
              {message.role === 'user' && (
                <Avatar className="h-8 w-8">
-                 <AvatarImage src={`https://picsum.photos/seed/${role}/40/40`} alt={role} />
+                 <AvatarImage src={imageData.avatars[role]} alt={role} />
                  <AvatarFallback>{role.charAt(0).toUpperCase()}</AvatarFallback>
                </Avatar>
             )}

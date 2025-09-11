@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Users, Zap } from "lucide-react";
 import Image from "next/image";
+import imageData from '@/lib/placeholder-images.json';
 
 const stats = [
     { title: "350+", description: "Companies Visited", icon: <Users /> },
@@ -11,7 +12,14 @@ const stats = [
 ];
 
 const recruiters = [
-    "tcs.png", "infosys.png", "wipro.png", "cognizant.png", "capgemini.png", "accenture.png", "tech-mahindra.png", "hcl.png"
+    imageData.placements.tcs,
+    imageData.placements.infosys,
+    imageData.placements.wipro,
+    imageData.placements.cognizant,
+    imageData.placements.capgemini,
+    imageData.placements.accenture,
+    imageData.placements['tech-mahindra'],
+    imageData.placements.hcl,
 ];
 
 export default function PlacementsPage() {
@@ -42,10 +50,10 @@ export default function PlacementsPage() {
                  <h2 className="text-3xl font-bold text-center mb-8">Our Top Recruiters</h2>
                  <div className="flex flex-wrap items-center justify-center gap-8">
                      {recruiters.map(logo => (
-                         <div key={logo} className="grayscale hover:grayscale-0 transition-all">
+                         <div key={logo.alt} className="grayscale hover:grayscale-0 transition-all">
                              <Image
-                                src={`https://asset.brandfetch.io/idq5d70Mxf/id54y6O2i0.svg?updated=1721033481682`}
-                                alt={logo.split('.')[0]}
+                                src={logo.src}
+                                alt={logo.alt}
                                 width={120}
                                 height={60}
                                 className="object-contain"

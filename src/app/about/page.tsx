@@ -2,8 +2,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Award, Target, Users } from "lucide-react";
 import Image from "next/image";
+import imageData from '@/lib/placeholder-images.json';
 
 export default function AboutPage() {
+    const historyImage = imageData.aboutPage.history;
     return (
         <div className="container py-12 px-4 md:px-6">
             <div className="text-center mb-12">
@@ -25,12 +27,12 @@ export default function AboutPage() {
                 </div>
                 <div>
                      <Image
-                        src="https://picsum.photos/seed/sanjivani-history/600/450"
-                        alt="College building"
-                        width={600}
-                        height={450}
+                        src={historyImage.src}
+                        alt={historyImage.alt}
+                        width={historyImage.width}
+                        height={historyImage.height}
                         className="rounded-xl shadow-lg"
-                        data-ai-hint="college building modern"
+                        data-ai-hint={historyImage.aiHint}
                     />
                 </div>
             </div>
