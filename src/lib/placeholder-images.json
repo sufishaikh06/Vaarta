@@ -64,13 +64,13 @@
   },
   "placements": {
     "tcs": { "alt": "TCS logo", "src": "/images/tcs.jpg" },
-    "infosys": { "alt": "Infosys logo", "src": "https://asset.brandfetch.io/idq5d70Mxf/id54y6O2i0.svg?updated=1721033481682" },
-    "wipro": { "alt": "Wipro logo", "src": "https://asset.brandfetch.io/idq5d70Mxf/id54y6O2i0.svg?updated=1721033481682" },
-    "cognizant": { "alt": "Cognizant logo", "src": "https://asset.brandfetch.io/idq5d70Mxf/id54y6O2i0.svg?updated=17210ous" },
-    "capgemini": { "alt": "Capgemini logo", "src": "https://asset.brandfetch.io/idq5d70Mxf/id54y6O2i0.svg?updated=17210ous" },
-    "accenture": { "alt": "Accenture logo", "src": "https://asset.brandfetch.io/idq5d70Mxf/id54y6O2i0.svg?updated=1721033481682" },
-    "tech-mahindra": { "alt": "Tech Mahindra logo", "src": "https://asset.brandfetch.io/idq5d70Mxf/id54y6O2i0.svg?updated=1721033481682" },
-    "hcl": { "alt": "HCL logo", "src": "https://asset.brandfetch.io/idq5d70Mxf/id54y6O2i0.svg?updated=1721033481682" }
+    "infosys": { "alt": "Infosys logo", "src": "/images/infosys.jpg" },
+    "wipro": { "alt": "Wipro logo", "src": "/images/wipro.png" },
+    "cognizant": { "alt": "Cognizant logo", "src": "/images/cognizant.webp" },
+    "capgemini": { "alt": "Capgemini logo", "src": "/images/capg.png" },
+    "accenture": { "alt": "Accenture logo", "src": "/images/accenture.png" },
+    "tech-mahindra": { "alt": "Tech Mahindra logo", "src": "/images/mahi.png" },
+    "hcl": { "alt": "HCL logo", "src": "/images/hcl.png" }
   },
   "avatars": {
       "bot": "https://picsum.photos/seed/bot/40/40",
