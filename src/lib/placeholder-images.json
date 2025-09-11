@@ -1,7 +1,7 @@
 {
   "homepage": {
     "hero": {
-      "src": "https://picsum.photos/seed/sanjivani-gate/1800/800",
+      "src": "/images/Homepage-Hero-Section.jpg",
       "width": 1800,
       "height": 800,
       "alt": "Sanjivani College Campus Entrance",
