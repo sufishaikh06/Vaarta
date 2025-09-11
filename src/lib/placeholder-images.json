@@ -17,7 +17,7 @@
   },
   "aboutPage": {
     "history": {
-      "src": "https://picsum.photos/seed/sanjivani-history/600/450",
+      "src": "/images/About-Us.jpeg",
       "width": 600,
       "height": 450,
       "alt": "College building",
