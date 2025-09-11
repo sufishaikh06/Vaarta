@@ -32,10 +32,10 @@
       "aiHint": "computer science students"
     },
     "it": {
-      "src": "https://picsum.photos/seed/sanjivani-it/400/250",
+      "src": "/images/it-dept.jpg",
       "width": 400,
       "height": 250,
-      "aiHint": "information technology office"
+      "aiHint": "information technology"
     },
     "mechanical": {
       "src": "https://picsum.photos/seed/sanjivani-mech/400/250",
