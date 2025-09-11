@@ -9,7 +9,9 @@ export interface AttendanceRecord {
 }
 
 export async function getAttendanceForStudent(studentId: string): Promise<AttendanceRecord[]> {
-  if (!studentId) return [];
+  if (!studentId) {
+    return [];
+  }
   const attendanceQuery = query(
     collection(db, 'attendance'),
     where('student_id', '==', studentId)

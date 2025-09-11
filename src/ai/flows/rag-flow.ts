@@ -141,7 +141,11 @@ const answerQuestionFlow = ai.defineFlow(
   async (input) => {
     // This mapping allows the prompt to use a generic 'userId' from the frontend,
     // and we can pass the correct parameter name to the tool.
-    const toolInput = { ...input, studentId: input.userId, facultyId: input.userId };
+    const toolInput = {
+      ...input,
+      studentId: input.userId, // Map userId to studentId for getAttendanceStatusTool
+      facultyId: input.userId, // Map userId to facultyId for getFacultyInfoTool
+    };
     const { output } = await prompt(toolInput);
     return output!;
   }
