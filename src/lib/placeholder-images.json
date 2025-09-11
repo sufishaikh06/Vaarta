@@ -26,7 +26,7 @@
   },
   "departments": {
     "computer": {
-      "src": "https://picsum.photos/seed/sanjivani-cs/400/250",
+      "src": "/images/computer-dept.jpg",
       "width": 400,
       "height": 250,
       "aiHint": "computer science students"
