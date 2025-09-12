@@ -1,3 +1,4 @@
+
 {
   "homepage": {
     "hero": {
@@ -79,7 +80,7 @@
       "parent": "https://picsum.photos/seed/parent/40/40"
   },
   "chatbot": {
-      "fabIcon": "/bot-icon.png"
+      "fabIcon": "/images/Vaarta-Logo.png"
   },
   "public": {
     "images": {
