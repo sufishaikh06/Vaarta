@@ -80,7 +80,7 @@
       "parent": "https://picsum.photos/seed/parent/40/40"
   },
   "chatbot": {
-      "fabIcon": "/images/Vaarta-Logo.png"
+      "fabIcon": "/images/bot-icon.png"
   },
   "public": {
     "images": {
