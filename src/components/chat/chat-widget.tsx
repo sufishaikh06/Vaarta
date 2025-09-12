@@ -70,7 +70,7 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
           className="fixed bottom-8 right-8 bg-primary text-primary-foreground rounded-full w-20 h-20 flex items-center justify-center shadow-lg hover:bg-primary/90 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-50"
           aria-label="Open chat"
         >
-          <img src="/images/Vaarta-Logo.png" alt="Chat Bot Icon" className="w-full h-full object-cover rounded-full" />
+          <img src="/images/bot-icon.png" alt="Chat Bot Icon" className="w-full h-full object-cover rounded-full" />
         </button>
       )}
 
