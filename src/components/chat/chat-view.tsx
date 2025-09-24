@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import type { UserRole, AppUser } from './chat-widget';
@@ -6,7 +5,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '../ui/button';
-import { Send, Mic, Volume2, LogOut, Loader2, Paperclip, Bot, FileText, CheckCircle2 } from 'lucide-react';
+import { Send, Mic, Volume2, LogOut, Loader2, Paperclip, Bot, FileText, CheckCircle2, Languages } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 import {
   Tooltip,
@@ -21,6 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { draftApplication } from '@/ai/flows/application-drafter';
 import { answerQuestion } from '@/ai/flows/rag-flow';
 import { useAuth } from '@/context/auth-context';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 
 interface Message {
   id: string;
@@ -49,6 +49,14 @@ declare global {
     }
 }
 
+type Language = { code: string, name: string };
+
+const supportedLanguages: Language[] = [
+    { code: 'en-US', name: 'English' },
+    { code: 'hi-IN', name: 'हिन्दी' },
+    { code: 'mr-IN', name: 'मराठी' },
+]
+
 export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => void }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
@@ -58,6 +66,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formType, setFormType] = useState<'application' | 'notice' | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>(supportedLanguages[0]);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
@@ -73,7 +82,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = 'en-US';
+      recognition.lang = selectedLanguage.code;
 
       recognition.onresult = (event) => {
         let interimTranscript = '';
@@ -102,7 +111,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     } else {
         console.warn("Speech Recognition not supported in this browser.");
     }
-  }, [toast]);
+  }, [toast, selectedLanguage]);
 
   const onFormSubmit = (data: any) => {
     setIsFormOpen(false);
@@ -154,7 +163,12 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     } else {
       // Default to RAG flow
       try {
-        const output = await answerQuestion({ question: userInput, userId: user?.id, userRole: user?.role });
+        const output = await answerQuestion({
+            question: userInput,
+            userId: user?.id,
+            userRole: user?.role,
+            language: selectedLanguage.name,
+        });
         addMessage('bot', output.answer);
       } catch (e) {
         console.error(e);
@@ -244,14 +258,27 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
             rows={1}
           />
            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex gap-1">
-             <Tooltip>
-                <TooltipTrigger asChild>
+             <Popover>
+                <PopoverTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Paperclip className="h-5 w-5 text-muted-foreground" />
+                        <Languages className="h-5 w-5 text-muted-foreground" />
                     </Button>
-                </TooltipTrigger>
-                <TooltipContent>Attach File (Not implemented)</TooltipContent>
-            </Tooltip>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-2">
+                    <div className="flex flex-col gap-1">
+                        {supportedLanguages.map(lang => (
+                            <Button
+                                key={lang.code}
+                                variant={selectedLanguage.code === lang.code ? 'default' : 'ghost'}
+                                onClick={() => setSelectedLanguage(lang)}
+                                className="justify-start"
+                            >
+                                {lang.name}
+                            </Button>
+                        ))}
+                    </div>
+                </PopoverContent>
+            </Popover>
           </div>
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
             <Tooltip>
@@ -260,7 +287,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
                         <Mic className={cn("h-5 w-5 text-muted-foreground", isRecording && "text-primary animate-pulse")} />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent>Voice Input</TooltipContent>
+                <TooltipContent>Voice Input ({selectedLanguage.name})</TooltipContent>
             </Tooltip>
             <Button size="icon" onClick={handleSendMessage} disabled={!input.trim()} className="h-8 w-8">
               <Send className="h-5 w-5" />
@@ -330,3 +357,5 @@ function ApplicationPreview({ application }: { application: any }) {
     </div>
   );
 }
+
+    

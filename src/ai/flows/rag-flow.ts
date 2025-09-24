@@ -87,7 +87,8 @@ const getFacultyInfoTool = ai.defineTool(
 const AnswerQuestionInputSchema = z.object({
   question: z.string().describe("The user's question about the college."),
   userId: z.string().optional().describe("The ID of the logged-in user, if applicable."),
-  userRole: z.string().optional().describe("The role of the logged-in user (student, faculty, parent).")
+  userRole: z.string().optional().describe("The role of the logged-in user (student, faculty, parent)."),
+  language: z.string().optional().describe("The language for the conversation (e.g., 'English', 'Hindi', 'Marathi'). Defaults to English."),
 });
 export type AnswerQuestionInput = z.infer<typeof AnswerQuestionInputSchema>;
 
@@ -106,18 +107,21 @@ const prompt = ai.definePrompt({
   output: { schema: AnswerQuestionOutputSchema },
   tools: [getAttendanceStatusTool, getFacultyInfoTool],
   prompt: `You are Vaarta, the AI assistant for Sanjivani College of Engineering.
-Your role is to answer user questions accurately and concisely.
+Your role is to answer user questions accurately and concisely in the specified language.
+
+**Language for this conversation: {{language}}**
 
 **Instructions:**
-1.  First, determine the user's intent. Are they asking a general question or asking for personal information?
-2.  For general questions about the college (e.g., "what is the admission process?"), you MUST answer based *only* on the information provided in the **Knowledge Base** below.
-3.  If the answer is not found in the Knowledge Base, you MUST state that you do not have that information. DO NOT invent answers or use external knowledge.
-4.  For questions about personal data (e.g., "what is my attendance?", "what subjects do I teach?"), you MUST use the provided tools.
+1.  **Language:** You MUST respond in the language specified above ({{language}}). All your analysis and final answers should be in this language.
+2.  **Intent:** First, determine the user's intent. Are they asking a general question or asking for personal information?
+3.  **General Questions:** For general questions about the college (e.g., "what is the admission process?"), you MUST answer based *only* on the information provided in the **Knowledge Base** below.
+4.  **Information Not Found:** If the answer is not in the Knowledge Base, you MUST state that you do not have that information, in the requested language. DO NOT invent answers or use external knowledge.
+5.  **Personal Data:** For questions about personal data (e.g., "what is my attendance?", "what subjects do I teach?"), you MUST use the provided tools.
     - If the user role is 'student' and they ask about attendance, use the \`getAttendanceStatus\` tool with the provided \`userId\` as the 'studentId' parameter.
     - If the user role is 'faculty' and they ask about their info, use the \`getFacultyInfo\` tool with the provided \`userId\` as the 'facultyId' parameter.
-5.  If the user asks for personal data but is not logged in (i.e., no \`userId\` is provided), you MUST tell them they need to log in to access that information.
-6.  Be polite, professional, and helpful in all your responses.
-7.  **IMPORTANT:** Format your answers clearly. Use bullet points or numbered lists for steps, lists, or multiple pieces of information. Avoid long paragraphs. Use markdown for formatting like **bolding** key terms.
+6.  **Login Required:** If the user asks for personal data but is not logged in (i.e., no \`userId\` is provided), you MUST tell them they need to log in to access that information, in the requested language.
+7.  **Formatting:** Format your answers clearly. Use bullet points or numbered lists for steps, lists, or multiple pieces of information. Use markdown for formatting like **bolding** key terms.
+8.  **Be Polite:** Be polite, professional, and helpful in all your responses.
 
 **Knowledge Base:**
 ---
@@ -128,7 +132,7 @@ ${knowledgeBase}
 - User ID: {{{userId}}}
 - User Role: {{{userRole}}}
 
-**User's Question:**
+**User's Question (in {{language}}):**
 "{{{question}}}"
 `,
 });
@@ -146,8 +150,11 @@ const answerQuestionFlow = ai.defineFlow(
       ...input,
       studentId: input.userId, // Map userId to studentId for getAttendanceStatusTool
       facultyId: input.userId, // Map userId to facultyId for getFacultyInfoTool
+      language: input.language || 'English', // Default to English if not provided
     };
     const { output } = await prompt(toolInput);
     return output!;
   }
 );
+
+    
