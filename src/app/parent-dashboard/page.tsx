@@ -18,23 +18,28 @@ async function getParentDashboardData(studentId: string) {
     // 2. Fetch attendance
     const attendanceQuery = query(collection(db, "attendance"), where("student_id", "==", studentId));
     const attendanceSnap = await getDocs(attendanceQuery);
-    const attendance = attendanceSnap.docs.map(doc => ({
-        subject: doc.data().subject,
-        // Assuming total classes is a static value for this example
-        total: 40, 
-        attended: doc.data().status === 'present' ? 35 : 10 // Dummy logic for attended
-    }));
+    
+    // Improved attendance calculation logic
+    const attendanceBySubject: { [key: string]: { attended: number, total: number } } = {};
+    const subjectsInTimetableQuery = query(collection(db, "timetable"));
+    const timetableSnap = await getDocs(subjectsInTimetableQuery);
+    
+    // Let's assume total classes is a static 40 for this prototype
+    const totalClasses = 40;
+    const subjects = [...new Set(timetableSnap.docs.map(d => d.data().subject))];
 
-    // A simple calculation for percentage, this is naive and should be improved
-    const calculatedAttendance = attendance.map(att => {
-        const attendedCount = attendance.filter(a => a.subject === att.subject && a.attended > 20).length;
-        const totalLectures = 40; // A fixed number for simplicity
-        return {
-            subject: att.subject,
-            attended: attendedCount * 15, // some dummy calculation
-            total: totalLectures
+    subjects.forEach(subject => {
+        const attendedCount = attendanceSnap.docs.filter(d => d.data().subject === subject && d.data().status === 'present').length;
+        attendanceBySubject[subject] = {
+            attended: attendedCount,
+            total: totalClasses
         };
-    }).filter((value, index, self) => self.findIndex(t => t.subject === value.subject) === index);
+    });
+
+    const calculatedAttendance = Object.entries(attendanceBySubject).map(([subject, data]) => ({
+        subject,
+        ...data
+    }));
 
 
     // 3. Fetch marks
@@ -81,7 +86,7 @@ export default async function ParentDashboardPage() {
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {attendance.map(att => {
-                            const percentage = Math.round((att.attended / att.total) * 100);
+                            const percentage = att.total > 0 ? Math.round((att.attended / att.total) * 100) : 0;
                             return (
                             <div key={att.subject}>
                                 <div className="flex justify-between mb-1">
@@ -91,6 +96,7 @@ export default async function ParentDashboardPage() {
                                 <Progress value={percentage} className={percentage < 75 ? '[&>div]:bg-destructive' : ''} />
                             </div>
                         )})}
+                         {attendance.length === 0 && <p className="text-muted-foreground">No attendance records found.</p>}
                     </CardContent>
                 </Card>
 
@@ -111,6 +117,7 @@ export default async function ParentDashboardPage() {
                                 </div>
                             </div>
                         ))}
+                         {marks.length === 0 && <p className="text-muted-foreground">No marks records found.</p>}
                     </CardContent>
                 </Card>
             </div>
