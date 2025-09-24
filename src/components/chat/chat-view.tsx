@@ -21,6 +21,7 @@ import { draftApplication } from '@/ai/flows/application-drafter';
 import { answerQuestion } from '@/ai/flows/rag-flow';
 import { useAuth } from '@/context/auth-context';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { saveApplication } from '@/lib/firebase-actions';
 
 interface Message {
   id: string;
@@ -144,7 +145,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
       if (role === 'student') {
         try {
           const output = await draftApplication({ userInput });
-          addMessage('bot', undefined, <ApplicationPreview application={output} />);
+          addMessage('bot', undefined, <ApplicationPreview application={output} onConfirm={() => addMessage('bot', 'Your application has been sent to Dr. Priya Mehta.')} />);
         } catch (e) {
           console.error(e);
           addMessage('bot', 'Sorry, I had trouble drafting the application. Please try again.');
@@ -320,13 +321,40 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
   );
 }
 
-function ApplicationPreview({ application }: { application: any }) {
+function ApplicationPreview({ application, onConfirm }: { application: any, onConfirm: () => void }) {
+  const { user } = useAuth();
   const { toast } = useToast();
-  const handleSubmit = () => {
-    toast({
-      title: 'Application Sent!',
-      description: 'Your application has been formatted and sent for approval.',
-    });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!user || !application) return;
+    setIsSubmitting(true);
+    
+    try {
+        await saveApplication({
+            student_id: user.id,
+            type: 'leave',
+            content: `Subject: ${application.subject}\n\n${application.body}`,
+            status: 'pending',
+            faculty_id: 'user_faculty_1' // Hardcoded as per plan
+        });
+
+        toast({
+            title: 'Application Sent!',
+            description: 'Your application has been submitted to the faculty for review.',
+        });
+        onConfirm();
+
+    } catch (error) {
+        console.error("Failed to save application", error);
+        toast({
+            title: 'Submission Failed',
+            description: 'Could not save your application. Please try again.',
+            variant: 'destructive',
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   if (!application) {
@@ -351,11 +379,10 @@ function ApplicationPreview({ application }: { application: any }) {
         <p><strong className="text-muted-foreground">Subject:</strong> {application.subject}</p>
         <p className="whitespace-pre-wrap">{application.body}</p>
       </div>
-      <Button className="w-full mt-4" onClick={handleSubmit}>
-        <CheckCircle2 className="mr-2" /> Confirm and Send Email
+      <Button className="w-full mt-4" onClick={handleSubmit} disabled={isSubmitting}>
+        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2" />}
+        Confirm and Send Email
       </Button>
     </div>
   );
 }
-
-    
