@@ -1,26 +1,30 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Allow public read on users for login verification.
-    // Deny all writes from the client.
+    // Allow public read for user profiles to enable login checks
     match /users/{userId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if false; // Deny client-side writes to user profiles
     }
 
-    // Allow authenticated users to create new applications.
-    // Deny read, update, delete from the client for security.
-    match /applications/{applicationId} {
-      allow create: if request.auth != null;
+    // Secure rule for creating applications
+    match /applications/{appId} {
+      // Allow a user to create an application ONLY if they are logged in
+      // AND the student_id in the document matches their own user ID.
+      allow create: if request.auth != null && request.resource.data.student_id == request.auth.uid;
+      
+      // Deny all other operations from the client for security.
+      // Updates (e.g., status changes) should be handled by a backend function.
       allow read, update, delete: if false;
     }
 
-    // Explicitly deny access to all other collections by default.
-    // This is more of a comment as default behavior is to deny.
-    // match /{document=**} {
-    //  allow read, write: if false;
-    // }
+    // Default deny for any other collections not explicitly defined.
+    // This is a security best practice.
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 }

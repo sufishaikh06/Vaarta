@@ -1,5 +1,5 @@
 
-'use server';
+'use client';
 
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
