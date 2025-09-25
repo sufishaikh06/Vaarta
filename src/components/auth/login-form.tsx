@@ -62,11 +62,16 @@ export function LoginForm({ role, onBack, onNavigateToSignup }: LoginFormProps) 
       const querySnapshot = await getDocs(q);
       
       if (querySnapshot.empty) {
-        throw new Error("Invalid credentials. Please try again.");
+        throw new Error("Invalid credentials. Please check your email and role.");
       }
 
       // Assuming one user per email/role combo
       const userDoc = querySnapshot.docs[0];
+      
+      if (!userDoc.exists()) {
+        throw new Error("Invalid credentials. Please try again.");
+      }
+
       const user = { id: userDoc.id, ...userDoc.data() } as AppUser;
       
       toast({
