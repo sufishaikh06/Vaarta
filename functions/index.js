@@ -28,10 +28,14 @@ exports.sendApplicationEmail = functions
       // 1. Fetch student's name from 'users' collection - using a fallback for robustness
       let studentName = "A Student"; // Default fallback
       if (application.student_id) {
-          const studentRef = db.collection("users").doc(application.student_id);
-          const studentDoc = await studentRef.get();
-          if (studentDoc.exists && studentDoc.data().name) {
-              studentName = studentDoc.data().name;
+          try {
+            const studentRef = db.collection("users").doc(application.student_id);
+            const studentDoc = await studentRef.get();
+            if (studentDoc.exists && studentDoc.data().name) {
+                studentName = studentDoc.data().name;
+            }
+          } catch (e) {
+            console.log("Could not fetch student name, using fallback. Error:", e);
           }
       }
 
@@ -88,4 +92,3 @@ exports.sendApplicationEmail = functions
       await db.collection("applications").doc(appId).update({ status: "failed", error: error.message });
     }
   });
-
