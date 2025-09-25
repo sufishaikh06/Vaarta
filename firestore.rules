@@ -1,60 +1,45 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Rules for 'users' collection
+    // Allow public read for user profiles for login verification
     match /users/{userId} {
       allow read: if true;
-      allow write: if false;
-    }
-    
-    // Rules for 'attendance' collection
-    match /attendance/{attId} {
-      allow read, write: if false;
+      allow write: if false; // Prevent client-side modification of user profiles
     }
 
-    // Rules for 'marks' collection
-    match /marks/{markId} {
-      allow read, write: if false;
-    }
-
-    // Rules for 'timetable' collection
-    match /timetable/{ttId} {
-      allow read: if true;
-      allow write: if false;
-    }
-
-    // Rules for 'notices' collection
-    match /notices/{noticeId} {
-      allow read: if true;
-      allow create: if request.auth != null; // Allow authenticated users to create
-      allow update, delete: if false;
-    }
-
-    // Rules for 'applications' collection
+    // Allow logged-in users to create applications
     match /applications/{appId} {
       allow create: if request.auth != null;
+      // Other operations (read, update, delete) are denied from the client
       allow read, update, delete: if false;
     }
-
-    // Rules for 'documents' collection
+    
+    // Allow public read for notices, documents, events, and timetable
+    match /notices/{noticeId} {
+      allow read: if true;
+      allow write: if false;
+    }
     match /documents/{docId} {
       allow read: if true;
-      allow create: if request.auth != null; // Allow authenticated users to create
-      allow update, delete: if false;
+      allow write: if false;
     }
-
-    // Rules for 'events' collection
     match /events/{eventId} {
       allow read: if true;
       allow write: if false;
+    }
+    match /timetable/{entryId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Deny access to attendance and marks from client side
+    match /attendance/{attId} {
+      allow read, write: if false;
+    }
+    match /marks/{markId} {
+      allow read, write: if false;
     }
   }
 }
