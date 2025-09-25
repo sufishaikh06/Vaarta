@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import type { UserRole, AppUser } from './chat-widget';
@@ -22,6 +23,7 @@ import { answerQuestion } from '@/ai/flows/rag-flow';
 import { useAuth } from '@/context/auth-context';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { saveApplication } from '@/lib/firebase-actions';
+import { textToSpeech } from '@/ai/flows/tts';
 
 interface Message {
   id: string;
@@ -68,8 +70,11 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
   const [formType, setFormType] = useState<'application' | 'notice' | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<Language>(supportedLanguages[0]);
+  const [audioPlaying, setAudioPlaying] = useState<string | null>(null);
+  const [audioLoading, setAudioLoading] = useState<string | null>(null);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { toast } = useToast();
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -199,6 +204,51 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     }
     setIsRecording(!isRecording);
   };
+  
+  const handlePlayAudio = async (message: Message) => {
+    if (typeof message.text !== 'string' || message.role === 'user') return;
+
+    if (audioRef.current && audioPlaying === message.id) {
+        audioRef.current.pause();
+        audioRef.current = null;
+        setAudioPlaying(null);
+        return;
+    }
+
+    if (audioRef.current) {
+        audioRef.current.pause();
+    }
+    
+    setAudioLoading(message.id);
+    setAudioPlaying(null);
+
+    try {
+        const response = await textToSpeech(message.text);
+        const audioData = response.media;
+        
+        const newAudio = new Audio(audioData);
+        audioRef.current = newAudio;
+        
+        newAudio.oncanplaythrough = () => {
+            newAudio.play();
+            setAudioPlaying(message.id);
+            setAudioLoading(null);
+        };
+        newAudio.onended = () => {
+            setAudioPlaying(null);
+            audioRef.current = null;
+        };
+        newAudio.onerror = () => {
+             toast({ title: "Error", description: "Could not play audio.", variant: "destructive" });
+             setAudioLoading(null);
+        }
+
+    } catch (error) {
+        console.error("TTS Error:", error);
+        toast({ title: "Text-to-Speech Failed", description: "Could not generate audio for this message.", variant: "destructive" });
+        setAudioLoading(null);
+    }
+  };
 
 
   return (
@@ -221,21 +271,30 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
             )}
             <div
               className={cn(
-                'max-w-xs md:max-w-md rounded-xl px-4 py-3 shadow-sm flex flex-col gap-2',
+                'max-w-xs md:max-w-md rounded-xl px-4 py-3 shadow-sm flex items-start gap-2',
                 msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-secondary text-secondary-foreground rounded-bl-none'
               )}
             >
               {msg.isTyping ? (
-                 <div className="flex items-center gap-1.5">
+                 <div className="flex items-center gap-1.5 p-1">
                     <span className="h-1.5 w-1.5 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></span>
                     <span className="h-1.5 w-1.5 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></span>
                     <span className="h-1.5 w-1.5 bg-current rounded-full animate-bounce"></span>
                 </div>
               ) : (
-                <>
-                {msg.text && <p className="text-sm whitespace-pre-wrap">{msg.text}</p>}
-                {msg.component}
-                </>
+                <div className="flex-grow">
+                  {msg.text && <p className="text-sm whitespace-pre-wrap">{msg.text}</p>}
+                  {msg.component}
+                </div>
+              )}
+               {msg.role === 'bot' && msg.text && (
+                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handlePlayAudio(msg)}>
+                    {audioLoading === msg.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <Volume2 className={cn("h-4 w-4", audioPlaying === msg.id ? "text-primary" : "text-muted-foreground")} />
+                    )}
+                </Button>
               )}
             </div>
              {msg.role === 'user' && (
