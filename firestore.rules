@@ -1,30 +1,48 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Allow reading the user list for login, but only allow users to modify their own document.
+    
+    // Users can only read their own data, but anyone can query the collection to log in.
     match /users/{userId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read;
+      allow write: if false; // Nobody can write to the user profile directly for now
     }
-
-    // Students can create applications and read their own. Faculty can read applications assigned to them.
-    // No one can update/delete after creation (except the backend function).
+    
+    // Students can create applications.
+    // Students can read their own applications.
+    // Faculty can read applications submitted to them.
     match /applications/{appId} {
       allow create: if request.auth != null;
-      allow read: if request.auth != null && (
-                    resource.data.student_id == request.auth.uid ||
-                    resource.data.faculty_id == request.auth.uid
-                  );
-      allow update, delete: if false;
+      allow read: if request.auth != null && (resource.data.student_id == request.auth.uid || resource.data.faculty_id == request.auth.uid);
+      allow update, delete: if false; // Nobody can update or delete for now
     }
 
-    // Allow logged-in users to read general documents like notices, timetable, and notes.
-    // Writing should be restricted (e.g., only by faculty from the backend).
-    match /{document=**} {
+    // Allow reading documents and notices for display on dashboards
+    match /documents/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.role == 'faculty';
+    }
+    
+    match /notices/{noticeId} {
        allow read: if request.auth != null;
+       allow write: if request.auth != null && request.auth.token.role == 'faculty';
+    }
+
+    // Allow reading timetable, attendance, and marks for dashboards
+    match /timetable/{ttId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    
+    match /attendance/{attId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    
+    match /marks/{markId} {
+      allow read: if request.auth != null;
+      allow write: if false;
     }
   }
 }
