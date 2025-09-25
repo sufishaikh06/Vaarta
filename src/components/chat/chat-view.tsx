@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import type { UserRole, AppUser } from './chat-widget';
@@ -22,7 +21,7 @@ import { draftApplication } from '@/ai/flows/application-drafter';
 import { answerQuestion } from '@/ai/flows/rag-flow';
 import { useAuth } from '@/context/auth-context';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { saveApplication } from '@/lib/firebase-actions';
+import { saveApplicationClient } from '@/lib/firebase-actions';
 import { textToSpeech } from '@/ai/flows/tts';
 
 interface Message {
@@ -495,7 +494,7 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
     setIsSubmitting(true);
     
     try {
-        await saveApplication({
+        await saveApplicationClient({
             student_id: user.id,
             type: 'leave',
             content: `Subject: ${application.subject}\n\n${application.body}`,

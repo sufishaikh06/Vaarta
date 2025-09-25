@@ -1,6 +1,3 @@
-
-'use server';
-
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -14,7 +11,8 @@ export interface ApplicationData {
     faculty_email: string;
 }
 
-export async function saveApplication(applicationData: ApplicationData) {
+export async function saveApplicationClient(applicationData: ApplicationData) {
+    'use client';
     try {
         const docRef = await addDoc(collection(db, "applications"), {
             ...applicationData,
