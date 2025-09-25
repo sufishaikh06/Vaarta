@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '../ui/button';
-import { Send, Mic, Volume2, LogOut, Loader2, Paperclip, Bot, FileText, CheckCircle2, Languages } from 'lucide-react';
+import { Send, Mic, Volume2, LogOut, Loader2, Bot, FileText, CheckCircle2, Languages } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 import {
   Tooltip,
@@ -252,6 +252,30 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     }
   };
 
+  const renderFormattedText = (text: string) => {
+    const html = text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/(\n|^)([\-\*] )(.*)/g, '$1<li>$3</li>') // Unordered lists
+      .replace(/(\n|^)(\d+\. )(.*)/g, '$1<li>$3</li>') // Ordered lists
+      .replace(/(<li>.*<\/li>)/gs, (match) => {
+        if (match.includes('<li')) { // Check if it's a list item
+             if (text.match(/(\n|^)(\d+\. )/)) {
+                return `<ol class="list-decimal pl-5">${match.replace(/<li>/g, '<li class="mb-1">')}</ol>`;
+            }
+            return `<ul class="list-disc pl-5">${match.replace(/<li>/g, '<li class="mb-1">')}</ul>`;
+        }
+        return match;
+      })
+      .replace(/\n/g, '<br />');
+
+    return (
+      <div
+        className="prose prose-sm text-foreground max-w-none"
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    );
+  };
+
 
   return (
     <TooltipProvider>
@@ -285,17 +309,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
                 </div>
               ) : (
                 <div className="flex-grow">
-                  {msg.text && (
-                    <div
-                      className="prose prose-sm text-foreground max-w-none"
-                      dangerouslySetInnerHTML={{
-                        __html: msg.text
-                          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                          .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                          .replace(/(\d+)\./g, '<br/>$1.')
-                      }}
-                    />
-                  )}
+                  {msg.text && renderFormattedText(msg.text)}
                   {msg.component}
                 </div>
               )}
@@ -463,4 +477,3 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
     </div>
   );
 }
-
