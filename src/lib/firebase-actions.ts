@@ -9,7 +9,9 @@ export interface ApplicationData {
     type: string;
     content: string;
     status: 'pending' | 'approved' | 'rejected';
-    faculty_id: string;
+    faculty_id: string; // Keep for potential linking, but email is now primary
+    faculty_name: string;
+    faculty_email: string;
 }
 
 export async function saveApplication(applicationData: ApplicationData) {

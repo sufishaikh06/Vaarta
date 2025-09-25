@@ -12,12 +12,13 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const DraftApplicationInputSchema = z.object({
-  userInput: z.string().describe('The student\'s informal request for a leave application.'),
+  reason: z.string().describe("The student's reason for the leave application."),
+  facultyName: z.string().describe("The name of the faculty member to address the application to."),
+  studentName: z.string().describe("The name of the student submitting the application."),
 });
 export type DraftApplicationInput = z.infer<typeof DraftApplicationInputSchema>;
 
 const DraftApplicationOutputSchema = z.object({
-  subject: z.string().describe('A formal subject line for the application email.'),
   body: z.string().describe('The formatted body of the application, addressing the appropriate faculty member.'),
 });
 export type DraftApplicationOutput = z.infer<typeof DraftApplicationOutputSchema>;
@@ -31,13 +32,14 @@ const prompt = ai.definePrompt({
   input: { schema: DraftApplicationInputSchema },
   output: { schema: DraftApplicationOutputSchema },
   prompt: `You are an expert assistant for a college ERP system named Vaarta.
-A student wants to send a leave application. Your task is to convert their informal request into a formal email.
+A student wants to send a leave application. Your task is to convert their informal request into a formal email body.
 
-The student's name is Rohan Sharma. The faculty head is Dr. Priya Mehta, HOD, Computer Science.
+The student's name is {{{studentName}}}.
+The faculty member's name is {{{facultyName}}}.
 
-Analyze the student's request and generate a formal subject line and a polite, well-formatted email body.
+Analyze the student's reason for leave and generate a polite, well-formatted email body. The body should be professional and concise.
 
-Student's Request: {{{userInput}}}
+Student's Reason for Leave: {{{reason}}}
 `,
 });
 

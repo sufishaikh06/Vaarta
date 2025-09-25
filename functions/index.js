@@ -1,3 +1,4 @@
+
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const sgMail = require("@sendgrid/mail");
@@ -24,17 +25,15 @@ exports.sendApplicationEmail = functions.firestore
       const studentDoc = await studentRef.get();
       const studentName = studentDoc.exists ? studentDoc.data().name : "A Student";
 
-      // 2. Fetch faculty's email from 'users' collection
-      const facultyRef = db.collection("users").doc(application.faculty_id);
-      const facultyDoc = await facultyRef.get();
-
-      if (!facultyDoc.exists || facultyDoc.data().role !== 'faculty') {
-        console.error("Faculty not found or user is not a faculty:", application.faculty_id);
-        await db.collection("applications").doc(appId).update({ status: "failed", error: "Recipient not found." });
+      // 2. Get faculty's email and name directly from the application document
+      const facultyEmail = application.faculty_email;
+      const facultyName = application.faculty_name || "Faculty Member";
+      
+      if (!facultyEmail) {
+        console.error("Faculty email is missing in the application document:", appId);
+        await db.collection("applications").doc(appId).update({ status: "failed", error: "Recipient email not found." });
         return;
       }
-      const facultyEmail = facultyDoc.data().email;
-      const facultyName = facultyDoc.data().name;
 
       // 3. Compose email
       const msg = {

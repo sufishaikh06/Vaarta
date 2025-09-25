@@ -53,6 +53,7 @@ declare global {
 }
 
 type Language = { code: string, name: string };
+type ConversationState = 'idle' | 'applying_leave_faculty_name' | 'applying_leave_faculty_email' | 'applying_leave_subject' | 'applying_leave_reason';
 
 const supportedLanguages: Language[] = [
     { code: 'en-US', name: 'English' },
@@ -73,6 +74,8 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
   const [selectedLanguage, setSelectedLanguage] = useState<Language>(supportedLanguages[0]);
   const [audioPlaying, setAudioPlaying] = useState<string | null>(null);
   const [audioLoading, setAudioLoading] = useState<string | null>(null);
+  const [conversationState, setConversationState] = useState<ConversationState>('idle');
+  const applicationData = useRef<Partial<any>>({});
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -147,16 +150,17 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     setInput('');
     addTypingIndicator();
 
+    // Check for conversational state first
+    if (conversationState !== 'idle') {
+        await handleLeaveApplicationConversation(userInput);
+        return;
+    }
+
     // Command/intent handling
     if (userInput.toLowerCase().includes('apply for leave')) {
       if (role === 'student') {
-        try {
-          const output = await draftApplication({ userInput });
-          addMessage('bot', undefined, <ApplicationPreview application={output} onConfirm={() => addMessage('bot', 'Your application has been sent to Dr. Priya Mehta.')} />);
-        } catch (e) {
-          console.error(e);
-          addMessage('bot', 'Sorry, I had trouble drafting the application. Please try again.');
-        }
+        setConversationState('applying_leave_faculty_name');
+        addMessage('bot', "Sure, I can help with that. Who is the faculty member you want to send this to?");
       } else {
         addMessage('bot', "This feature is only available for students.");
       }
@@ -183,6 +187,59 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
       }
     }
   };
+
+  const handleLeaveApplicationConversation = async (userInput: string) => {
+      switch (conversationState) {
+          case 'applying_leave_faculty_name':
+              applicationData.current.facultyName = userInput;
+              setConversationState('applying_leave_faculty_email');
+              addMessage('bot', `Got it. What is ${userInput}'s email address?`);
+              break;
+          case 'applying_leave_faculty_email':
+              applicationData.current.facultyEmail = userInput;
+              setConversationState('applying_leave_subject');
+              addMessage('bot', "Great. What should be the subject of the email?");
+              break;
+          case 'applying_leave_subject':
+              applicationData.current.subject = userInput;
+              setConversationState('applying_leave_reason');
+              addMessage('bot', "Perfect. Now, please tell me the reason for your leave.");
+              break;
+          case 'applying_leave_reason':
+              applicationData.current.reason = userInput;
+              setConversationState('idle');
+              addMessage('bot', "Thank you. I'm drafting the application now based on the details you provided.");
+
+              try {
+                  const output = await draftApplication({
+                      reason: applicationData.current.reason,
+                      facultyName: applicationData.current.facultyName,
+                      studentName: user?.name || "the student"
+                  });
+
+                  const fullApplicationData = {
+                      ...applicationData.current,
+                      body: output.body
+                  };
+                  
+                  addMessage('bot', undefined, 
+                    <ApplicationPreview 
+                      application={fullApplicationData} 
+                      onConfirm={() => {
+                          addMessage('bot', `Your application has been sent to ${applicationData.current.facultyName}.`);
+                          applicationData.current = {};
+                      }} 
+                    />
+                  );
+
+              } catch (e) {
+                  console.error(e);
+                  addMessage('bot', 'Sorry, I had trouble drafting the application. Please try again.');
+                  applicationData.current = {};
+              }
+              break;
+      }
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -229,7 +286,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
         if(!response || !response.media) {
              toast({ 
                 title: "Text-to-Speech Failed", 
-                description: "Audio generation limit reached for today. Please try again tomorrow.",
+                description: "Audio generation limit reached. Please try again later or upgrade your plan.",
                 variant: "destructive" 
             });
             setAudioLoading(null);
@@ -352,7 +409,11 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={`Ask me anything, or type 'apply for leave'...`}
+            placeholder={
+              conversationState.startsWith('applying_leave')
+                ? `Enter ${conversationState.split('_').slice(2).join(' ')}...`
+                : "Ask me anything, or type 'apply for leave'..."
+            }
             className="pr-20 pl-12 min-h-[48px] resize-none"
             rows={1}
           />
@@ -439,7 +500,9 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
             type: 'leave',
             content: `Subject: ${application.subject}\n\n${application.body}`,
             status: 'pending',
-            faculty_id: 'user_faculty_1' // Hardcoded as per plan
+            faculty_id: 'placeholder_faculty_id', // This is now a placeholder
+            faculty_name: application.facultyName,
+            faculty_email: application.facultyEmail,
         });
 
         toast({
@@ -460,7 +523,7 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
     }
   };
 
-  if (!application) {
+  if (!application || !application.body) {
     return (
         <div className="p-4 bg-background rounded-lg border">
             <div className="flex items-center gap-2">
@@ -478,7 +541,7 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
         <h4 className="font-bold text-lg">Application Draft</h4>
       </div>
       <div className="space-y-2 text-sm border-l-2 border-primary/50 pl-3">
-        <p><strong className="text-muted-foreground">To:</strong> Dr. Priya Mehta (HOD, Computer Science)</p>
+        <p><strong className="text-muted-foreground">To:</strong> {application.facultyName} ({application.facultyEmail})</p>
         <p><strong className="text-muted-foreground">Subject:</strong> {application.subject}</p>
         <p className="whitespace-pre-wrap">{application.body}</p>
       </div>
