@@ -1,4 +1,3 @@
-
 {
   "homepage": {
     "hero": {
@@ -64,23 +63,50 @@
     }
   },
   "placements": {
-    "tcs": { "alt": "TCS logo", "src": "/images/tcs.jpg" },
-    "infosys": { "alt": "Infosys logo", "src": "/images/infosys.jpg" },
-    "wipro": { "alt": "Wipro logo", "src": "/images/wipro.png" },
-    "cognizant": { "alt": "Cognizant logo", "src": "/images/cognizant.webp" },
-    "capgemini": { "alt": "Capgemini logo", "src": "/images/capg.png" },
-    "accenture": { "alt": "Accenture logo", "src": "/images/accenture.png" },
-    "tech-mahindra": { "alt": "Tech Mahindra logo", "src": "/images/mahi.png" },
-    "hcl": { "alt": "HCL logo", "src": "/images/hcl.png" }
+    "tcs": {
+      "alt": "TCS logo",
+      "src": "/images/tcs.jpg"
+    },
+    "infosys": {
+      "alt": "Infosys logo",
+      "src": "/images/infosys.jpg"
+    },
+    "wipro": {
+      "alt": "Wipro logo",
+      "src": "/images/wipro.png"
+    },
+    "cognizant": {
+      "alt": "Cognizant logo",
+      "src": "/images/cognizant.webp"
+    },
+    "capgemini": {
+      "alt": "Capgemini logo",
+      "src": "/images/capg.png"
+    },
+    "accenture": {
+      "alt": "Accenture logo",
+      "src": "/images/accenture.png"
+    },
+    "tech-mahindra": {
+      "alt": "Tech Mahindra logo",
+      "src": "/images/mahi.png"
+    },
+    "hcl": {
+      "alt": "HCL logo",
+      "src": "/images/hcl.png"
+    }
   },
   "avatars": {
-      "bot": "https://picsum.photos/seed/bot/40/40",
-      "student": "https://picsum.photos/seed/student/40/40",
-      "faculty": "https://picsum.photos/seed/faculty/40/40",
-      "parent": "https://picsum.photos/seed/parent/40/40"
+    "bot": "https://picsum.photos/seed/bot/40/40",
+    "student": "https://picsum.photos/seed/student/40/40",
+    "faculty": "https://picsum.photos/seed/faculty/40/40",
+    "parent": "https://picsum.photos/seed/parent/40/40"
   },
   "chatbot": {
-      "fabIcon": "/images/bot-icon.png"
+    "fabIcon": {
+      "src": "/Vaarta-Logo.png",
+      "alt": "Vaarta Chatbot Icon"
+    }
   },
   "public": {
     "images": {

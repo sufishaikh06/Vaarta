@@ -26,6 +26,7 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
   const { user, login, logout } = useAuth();
   const [selectedRole, setSelectedRole] = useState<UserRole>('guest');
   const [viewState, setViewState] = useState<ViewState>('role-selection');
+  const fabIcon = imageData.chatbot.fabIcon;
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
@@ -70,7 +71,7 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
           className="fixed bottom-8 right-8 bg-primary text-primary-foreground rounded-full w-20 h-20 flex items-center justify-center shadow-lg hover:bg-primary/90 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-50"
           aria-label="Open chat"
         >
-          <img src="/Vaarta-Logo.png" alt="Chat Bot Icon" className="w-full h-full object-cover rounded-full" />
+          <Image src={fabIcon.src} alt={fabIcon.alt} width={80} height={80} className="object-cover rounded-full" />
         </button>
       )}
 
