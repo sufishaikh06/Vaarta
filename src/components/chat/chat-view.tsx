@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import type { UserRole, AppUser } from './chat-widget';
@@ -511,7 +512,6 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
         onConfirm();
 
     } catch (error) {
-        console.error("Failed to save application", error);
         toast({
             title: 'Submission Failed',
             description: 'Could not save your application. Please try again.',
@@ -551,5 +551,3 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
     </div>
   );
 }
-
-    

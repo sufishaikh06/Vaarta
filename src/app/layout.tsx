@@ -8,6 +8,7 @@ import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { ChatWidgetWrapper } from '@/components/chat/chat-widget-wrapper';
 import { AuthProvider } from '@/context/auth-context';
+import { FirebaseErrorListener } from '@/components/firebase-error-listener';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -33,6 +34,7 @@ export default function RootLayout({
         )}
       >
         <AuthProvider>
+          <FirebaseErrorListener />
           <div className="relative flex min-h-dvh flex-col bg-background">
             <Navbar />
             <main className="flex-1">{children}</main>
