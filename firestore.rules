@@ -1,25 +1,56 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Rules for the 'users' collection
-    match /users/{userId} {
-      // Allow anyone to read user data (e.g., for login to check if a user exists)
-      allow read: if true;
-      // Disallow clients from writing to the users collection directly
-      allow write: if false;
+    // Default deny all access to collections not explicitly defined.
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    // Rules for the 'applications' collection
+    // --- Specific Collection Rules ---
+
+    // USERS: Allow public read for login, but no client-side writes.
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if false; // All writes should be handled by secure backend logic.
+    }
+
+    // APPLICATIONS: Allow authenticated users to create. Deny all other client actions.
     match /applications/{applicationId} {
-      // Allow a user to create an application if they are logged in
       allow create: if request.auth != null;
-      
-      // Do not allow clients to read, update, or delete applications directly
       allow read, update, delete: if false;
     }
 
-    // Default-deny for any other collections not explicitly matched
+    // ATTENDANCE: Deny all client access.
+    match /attendance/{attendanceId} {
+        allow read, write: if false;
+    }
+    
+    // MARKS: Deny all client access.
+    match /marks/{markId} {
+        allow read, write: if false;
+    }
+
+    // NOTICES: Deny all client access.
+    match /notices/{noticeId} {
+        allow read, write: if false;
+    }
+    
+    // DOCUMENTS: Deny all client access.
+    match /documents/{documentId} {
+        allow read, write: if false;
+    }
+
+    // TIMETABLE: Deny all client access.
+    match /timetable/{timetableId} {
+        allow read, write: if false;
+    }
+    
+    // EVENTS: Deny all client access.
+    match /events/{eventId} {
+        allow read, write: if false;
+    }
   }
 }
