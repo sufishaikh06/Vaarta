@@ -89,29 +89,3 @@ exports.sendApplicationEmail = functions
     }
   });
 
-
-/**
- * A callable function to test SendGrid email sending.
- */
-exports.sendTestEmail = functions
-  .runWith({ secrets: [sendgridApiKey] })
-  .https.onCall(async (data, context) => {
-    sgMail.setApiKey(sendgridApiKey.value());
-
-    const msg = {
-      to: "priya.mehta@example.com",
-      from: "noreply@vaartabot.com",
-      subject: "VaartaBot Email Test",
-      text: "This is a test email from your VaartaBot application to confirm SendGrid is working.",
-      html: "<strong>This is a test email from your VaartaBot application to confirm SendGrid is working.</strong>",
-    };
-
-    try {
-      await sgMail.send(msg);
-      console.log("Test email sent successfully.");
-      return { success: true, message: "Test email sent to priya.mehta@example.com!" };
-    } catch (error) {
-      console.error("Error sending test email:", error);
-      return { success: false, message: `Failed to send test email: ${error.message}` };
-    }
-});
