@@ -226,6 +226,9 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
 
     try {
         const response = await textToSpeech(message.text);
+        if(!response || !response.media) {
+            throw new Error("No media in response");
+        }
         const audioData = response.media;
         
         const newAudio = new Audio(audioData);
@@ -245,9 +248,12 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
              setAudioLoading(null);
         }
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("TTS Error:", error);
-        toast({ title: "Text-to-Speech Failed", description: "Could not generate audio for this message.", variant: "destructive" });
+        const errorMessage = error.message && error.message.includes('429') 
+            ? "Audio generation limit reached for today."
+            : "Could not generate audio for this message.";
+        toast({ title: "Text-to-Speech Failed", description: errorMessage, variant: "destructive" });
         setAudioLoading(null);
     }
   };
@@ -477,3 +483,5 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
     </div>
   );
 }
+
+    

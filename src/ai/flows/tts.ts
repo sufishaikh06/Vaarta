@@ -18,7 +18,7 @@ const TextToSpeechInputSchema = z.string();
 export type TextToSpeechInput = z.infer<typeof TextToSpeechInputSchema>;
 
 const TextToSpeechOutputSchema = z.object({
-  media: z.string().describe('The audio data URI.'),
+  media: z.string().describe('The audio data URI.').nullable(),
 });
 export type TextToSpeechOutput = z.infer<typeof TextToSpeechOutputSchema>;
 
@@ -62,27 +62,35 @@ const textToSpeechFlow = ai.defineFlow(
     outputSchema: TextToSpeechOutputSchema,
   },
   async query => {
-    const {media} = await ai.generate({
-      model: googleAI.model('gemini-2.5-flash-preview-tts'),
-      config: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: {voiceName: 'Algenib'},
-          },
+    try {
+        const {media} = await ai.generate({
+        model: googleAI.model('gemini-2.5-flash-preview-tts'),
+        config: {
+            responseModalities: ['AUDIO'],
+            speechConfig: {
+            voiceConfig: {
+                prebuiltVoiceConfig: {voiceName: 'Algenib'},
+            },
+            },
         },
-      },
-      prompt: query,
-    });
-    if (!media) {
-      throw new Error('no media returned');
+        prompt: query,
+        });
+        if (!media) {
+            return { media: null };
+        }
+        const audioBuffer = Buffer.from(
+        media.url.substring(media.url.indexOf(',') + 1),
+        'base64'
+        );
+        return {
+        media: 'data:audio/wav;base64,' + (await toWav(audioBuffer)),
+        };
+    } catch (error) {
+        console.error("Error in textToSpeechFlow:", error);
+        // Re-throw the error so the client can handle it
+        throw error;
     }
-    const audioBuffer = Buffer.from(
-      media.url.substring(media.url.indexOf(',') + 1),
-      'base64'
-    );
-    return {
-      media: 'data:audio/wav;base64,' + (await toWav(audioBuffer)),
-    };
   }
 );
+
+    
