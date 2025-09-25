@@ -23,6 +23,7 @@ exports.sendApplicationEmail = functions.firestore
       // 1. Fetch student's name from 'users' collection
       const studentRef = db.collection("users").doc(application.student_id);
       const studentDoc = await studentRef.get();
+      // Use the student's name if found, otherwise use a fallback.
       const studentName = studentDoc.exists ? studentDoc.data().name : "A Student";
 
       // 2. Get faculty's email and name directly from the application document
