@@ -88,7 +88,16 @@ exports.sendApplicationEmail = functions
 
     } catch (error) {
       console.error(`Error sending email for application ${appId}:`, error);
+      
+      let errorMessage = "An unknown error occurred.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (error.response) {
+        // Handle SendGrid-specific errors
+        errorMessage = JSON.stringify(error.response.body);
+      }
+      
       // Update status to "failed" with an error message
-      await db.collection("applications").doc(appId).update({ status: "failed", error: error.message });
+      await db.collection("applications").doc(appId).update({ status: "failed", error: errorMessage });
     }
   });

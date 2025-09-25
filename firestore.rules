@@ -3,52 +3,34 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can read their own profile, and anyone can query the list for login purposes.
-    match /users/{userId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Allow anyone to read non-sensitive collections.
-    match /timetable/{docId} {
-      allow read: if true;
+    function isOwner(userId) {
+      return request.auth.uid == userId;
     }
-    match /notices/{docId} {
-      allow read: if true;
-    }
-    match /events/{docId} {
-      allow read: if true;
-    }
-    match /documents/{docId} {
-      allow read: if true;
+
+    // Rules for 'users' collection
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isOwner(userId);
     }
     
-    // Application-specific rules
+    // Rules for 'applications' collection
     match /applications/{appId} {
-      allow read: if request.auth != null && (
-        request.auth.uid == resource.data.student_id ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'faculty'
-      );
-      // Allow creation for this prototype, as we don't have real Firebase auth on the client.
-      allow create;
-      allow update, delete: if false; // Nobody can update or delete
+      allow read: if isSignedIn();
+      allow create; // Allow any client to create for the prototype's chatbot
+      allow update: if true; // Allow the Cloud Function (admin) to update the status
+      allow delete: if false;
     }
 
-    // Attendance & Marks can only be read by the student or their parent.
-    match /attendance/{attId} {
-      allow read: if request.auth != null && (
-        request.auth.uid == resource.data.student_id ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.child_id == resource.data.student_id
-      );
-      allow write: if false;
-    }
-
-    match /marks/{markId} {
-       allow read: if request.auth != null && (
-        request.auth.uid == resource.data.student_id ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.child_id == resource.data.student_id
-      );
-      allow write: if false;
+    // Rules for other collections (read-only for authenticated users)
+    match /{document=**} {
+       allow read: if isSignedIn();
+       allow write: if false; // Default deny all other writes
     }
   }
 }
