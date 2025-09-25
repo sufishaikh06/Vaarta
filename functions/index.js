@@ -98,6 +98,10 @@ exports.sendApplicationEmail = functions
       }
       
       // Update status to "failed" with an error message
-      await db.collection("applications").doc(appId).update({ status: "failed", error: errorMessage });
+      try {
+        await db.collection("applications").doc(appId).update({ status: "failed", error: errorMessage });
+      } catch (updateError) {
+        console.error(`Failed to update status for application ${appId}:`, updateError);
+      }
     }
   });

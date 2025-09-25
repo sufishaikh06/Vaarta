@@ -1,56 +1,73 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Default deny all access to collections not explicitly defined.
-    match /{document=**} {
-      allow read, write: if false;
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // --- Specific Collection Rules ---
-
-    // USERS: Allow public read for login, but no client-side writes.
+    // Collection: users
+    // Allow anyone to read user data (for login checks).
+    // Disallow writing from the client-side for security.
     match /users/{userId} {
       allow read: if true;
-      allow write: if false; // All writes should be handled by secure backend logic.
+      allow write: if false;
     }
 
-    // APPLICATIONS: Allow authenticated users to create. Deny all other client actions.
-    match /applications/{applicationId} {
-      allow create: if request.auth != null;
+    // Collection: applications
+    // Allow any signed-in user to create an application.
+    // The Cloud Function will handle reading. Deny client-side updates/deletes.
+    match /applications/{appId} {
+      allow create: if isSignedIn();
       allow read, update, delete: if false;
     }
 
-    // ATTENDANCE: Deny all client access.
-    match /attendance/{attendanceId} {
-        allow read, write: if false;
+    // Collection: attendance
+    // Secure by default. No client-side access.
+    match /attendance/{attId} {
+      allow read, write: if false;
     }
-    
-    // MARKS: Deny all client access.
+
+    // Collection: marks
+    // Secure by default. No client-side access.
     match /marks/{markId} {
-        allow read, write: if false;
+      allow read, write: if false;
     }
 
-    // NOTICES: Deny all client access.
+    // Collection: timetable
+    // Allow any client to read the timetable.
+    // Disallow writing from the client.
+    match /timetable/{ttId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Collection: notices
+    // Allow any client to read notices.
+    // Only allow signed-in users (faculty) to create notices.
     match /notices/{noticeId} {
-        allow read, write: if false;
-    }
-    
-    // DOCUMENTS: Deny all client access.
-    match /documents/{documentId} {
-        allow read, write: if false;
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
 
-    // TIMETABLE: Deny all client access.
-    match /timetable/{timetableId} {
-        allow read, write: if false;
+    // Collection: documents
+    // Allow any client to read document info.
+    // Only allow signed-in users (faculty) to create documents.
+    match /documents/{docId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
-    
-    // EVENTS: Deny all client access.
+
+    // Collection: events
+    // Allow any client to read events.
+    // Disallow writing from the client.
     match /events/{eventId} {
-        allow read, write: if false;
+      allow read: if true;
+      allow write: if false;
     }
   }
 }
