@@ -4,63 +4,27 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if a user is authenticated
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    // Helper function to get user data
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
-    }
-
-    // Rules for the 'users' collection
+    // Allow reading the user list for login, but only allow users to modify their own document.
     match /users/{userId} {
-      // Users can only read their own document
-      // Allow any signed-in user to create their own user document (for signup)
-      allow read: if isSignedIn() && request.auth.uid == userId;
-      allow create: if isSignedIn();
-      allow update, delete: if false; // Disallow updates and deletes for now
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Rules for the 'applications' collection
+    // Students can create applications and read their own. Faculty can read applications assigned to them.
+    // No one can update/delete after creation (except the backend function).
     match /applications/{appId} {
-      // CREATE: A student can create an application for themselves.
-      allow create: if isSignedIn()
-                    && request.resource.data.student_id == request.auth.uid
-                    && getUserData(request.auth.uid).role == 'student';
-
-      // READ:
-      // - A student can read their own application.
-      // - A faculty member can read an application assigned to them.
-      allow read: if isSignedIn() &&
-                  ( (resource.data.student_id == request.auth.uid && getUserData(request.auth.uid).role == 'student') ||
-                    (resource.data.faculty_id == request.auth.uid && getUserData(request.auth.uid).role == 'faculty') );
-
-
-      // UPDATE & DELETE: Disallow client-side updates/deletes to prevent tampering.
-      // The Cloud Function will handle status updates with admin privileges.
+      allow create: if request.auth != null;
+      allow read: if request.auth != null && (
+                    resource.data.student_id == request.auth.uid ||
+                    resource.data.faculty_id == request.auth.uid
+                  );
       allow update, delete: if false;
     }
 
-    // Default deny for other collections to ensure security
-    match /attendance/{docId} {
-      allow read, write: if isSignedIn();
-    }
-    match /marks/{docId} {
-      allow read, write: if isSignedIn();
-    }
-    match /timetable/{docId} {
-      allow read, write: if isSignedIn();
-    }
-    match /notices/{docId} {
-      allow read, write: if isSignedIn();
-    }
-    match /documents/{docId} {
-      allow read, write: if isSignedIn();
-    }
-    match /events/{docId} {
-      allow read, write: if isSignedIn();
+    // Allow logged-in users to read general documents like notices, timetable, and notes.
+    // Writing should be restricted (e.g., only by faculty from the backend).
+    match /{document=**} {
+       allow read: if request.auth != null;
     }
   }
 }
