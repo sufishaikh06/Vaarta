@@ -133,7 +133,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
   }
 
   const addMessage = (role: 'user' | 'bot', text?: string, component?: React.ReactNode) => {
-    const id = Date.now().toString();
+    const id = `${Date.now()}-${Math.random()}`;
     setMessages((prev) => [...prev.filter(m => !m.isTyping), { id, role, text, component }]);
     return id;
   };
