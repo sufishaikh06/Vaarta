@@ -494,32 +494,22 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
     if (!user || !application) return;
     setIsSubmitting(true);
     
-    try {
-        await saveApplicationClient({
-            student_id: user.id,
-            type: 'leave',
-            content: `Subject: ${application.subject}\n\n${application.body}`,
-            status: 'pending',
-            faculty_id: 'placeholder_faculty_id', // This is now a placeholder
-            faculty_name: application.facultyName,
-            faculty_email: application.facultyEmail,
-        });
+    await saveApplicationClient({
+        student_id: user.id,
+        type: 'leave',
+        content: `Subject: ${application.subject}\n\n${application.body}`,
+        status: 'pending',
+        faculty_id: 'placeholder_faculty_id', // This is now a placeholder
+        faculty_name: application.facultyName,
+        faculty_email: application.facultyEmail,
+    });
 
-        toast({
-            title: 'Application Sent!',
-            description: 'Your application has been sent to the faculty for review.',
-        });
-        onConfirm();
-
-    } catch (error) {
-        toast({
-            title: 'Submission Failed',
-            description: 'Could not save your application. Please try again.',
-            variant: 'destructive',
-        });
-    } finally {
-        setIsSubmitting(false);
-    }
+    toast({
+        title: 'Application Sent!',
+        description: 'Your application has been sent to the faculty for review.',
+    });
+    onConfirm();
+    setIsSubmitting(false);
   };
 
   if (!application || !application.body) {
