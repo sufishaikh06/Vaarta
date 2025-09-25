@@ -17,7 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { ApplicationForm } from '../student/application-form';
 import { NoticeForm } from '../faculty/notice-form';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { draftApplication } from '@/ai/flows/application-drafter';
 import { answerQuestion } from '@/ai/flows/rag-flow';
 import { useAuth } from '@/context/auth-context';
@@ -225,9 +225,27 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
                   addMessage('bot', undefined, 
                     <ApplicationPreview 
                       application={fullApplicationData} 
-                      onConfirm={() => {
-                          addMessage('bot', `Your application has been sent to ${applicationData.current.facultyName}.`);
-                          applicationData.current = {};
+                      onConfirm={async () => {
+                          if (!user) return;
+                          try {
+                            await saveApplicationClient(user.id, {
+                                type: 'leave',
+                                content: `Subject: ${fullApplicationData.subject}\n\n${fullApplicationData.body}`,
+                                status: 'pending',
+                                faculty_id: 'placeholder_faculty_id', // This is a placeholder
+                                faculty_name: fullApplicationData.facultyName,
+                                faculty_email: fullApplicationData.facultyEmail,
+                            });
+                            addMessage('bot', `Your application has been sent to ${applicationData.current.facultyName}.`);
+                            applicationData.current = {};
+                          } catch (error) {
+                             // The error is already being handled by the global listener
+                             // which will show a toast and/or an overlay.
+                             // We just need to reset the conversation state here.
+                             addMessage('bot', 'There was a problem submitting your application. Please check the error message and try again.');
+                             setConversationState('idle');
+                             applicationData.current = {};
+                          }
                       }} 
                     />
                   );
@@ -475,6 +493,12 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
                 <DialogTitle>
                     {formType === 'application' ? 'Leave Application' : 'Post a New Notice'}
                 </DialogTitle>
+                <DialogDescription>
+                    {formType === 'application' 
+                        ? 'Fill out the form below to submit your leave application.'
+                        : 'Create and broadcast a new notice to the selected target group.'
+                    }
+                </DialogDescription>
             </DialogHeader>
             {formType === 'application' && <ApplicationForm onSubmit={onFormSubmit} />}
             {formType === 'notice' && <NoticeForm onSubmit={onFormSubmit} />}
@@ -485,30 +509,21 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
   );
 }
 
-function ApplicationPreview({ application, onConfirm }: { application: any, onConfirm: () => void }) {
-  const { user } = useAuth();
+function ApplicationPreview({ application, onConfirm }: { application: any, onConfirm: () => Promise<void> }) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!user || !user.id || !application) return;
     setIsSubmitting(true);
-    
-    await saveApplicationClient(user.id, {
-        type: 'leave',
-        content: `Subject: ${application.subject}\n\n${application.body}`,
-        status: 'pending',
-        faculty_id: 'placeholder_faculty_id', // This is a placeholder
-        faculty_name: application.facultyName,
-        faculty_email: application.facultyEmail,
-    });
-
-    toast({
-        title: 'Application Sent!',
-        description: 'Your application has been sent to the faculty for review.',
-    });
-    onConfirm();
-    setIsSubmitting(false);
+    try {
+        await onConfirm();
+        toast({
+            title: 'Application Sent!',
+            description: 'Your application has been sent to the faculty for review.',
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   if (!application || !application.body) {
