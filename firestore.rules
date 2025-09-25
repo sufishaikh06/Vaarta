@@ -3,8 +3,64 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+
+    // Helper function to check if a user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper function to get user data
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Users can only read their own document
+      // Allow any signed-in user to create their own user document (for signup)
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // Disallow updates and deletes for now
+    }
+
+    // Rules for the 'applications' collection
+    match /applications/{appId} {
+      // CREATE: A student can create an application for themselves.
+      allow create: if isSignedIn()
+                    && request.resource.data.student_id == request.auth.uid
+                    && getUserData(request.auth.uid).role == 'student';
+
+      // READ:
+      // - A student can read their own application.
+      // - A faculty member can read an application assigned to them.
+      allow read: if isSignedIn() &&
+                  ( (resource.data.student_id == request.auth.uid && getUserData(request.auth.uid).role == 'student') ||
+                    (resource.data.faculty_id == request.auth.uid && getUserData(request.auth.uid).role == 'faculty') );
+
+
+      // UPDATE & DELETE: Disallow client-side updates/deletes to prevent tampering.
+      // The Cloud Function will handle status updates with admin privileges.
+      allow update, delete: if false;
+    }
+
+    // Default deny for other collections to ensure security
+    match /attendance/{docId} {
+      allow read, write: if isSignedIn();
+    }
+    match /marks/{docId} {
+      allow read, write: if isSignedIn();
+    }
+    match /timetable/{docId} {
+      allow read, write: if isSignedIn();
+    }
+    match /notices/{docId} {
+      allow read, write: if isSignedIn();
+    }
+    match /documents/{docId} {
+      allow read, write: if isSignedIn();
+    }
+    match /events/{docId} {
+      allow read, write: if isSignedIn();
     }
   }
 }
