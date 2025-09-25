@@ -58,6 +58,7 @@ const supportedLanguages: Language[] = [
     { code: 'en-US', name: 'English' },
     { code: 'hi-IN', name: 'हिन्दी' },
     { code: 'mr-IN', name: 'मराठी' },
+    { code: 'kn-IN', name: 'ಕನ್ನಡ' },
 ]
 
 export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => void }) {
