@@ -227,7 +227,13 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     try {
         const response = await textToSpeech(message.text);
         if(!response || !response.media) {
-            throw new Error("No media in response");
+             toast({ 
+                title: "Text-to-Speech Failed", 
+                description: "Audio generation limit reached for today. Please try again tomorrow.",
+                variant: "destructive" 
+            });
+            setAudioLoading(null);
+            return;
         }
         const audioData = response.media;
         

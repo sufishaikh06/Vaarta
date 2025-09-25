@@ -86,9 +86,9 @@ const textToSpeechFlow = ai.defineFlow(
         media: 'data:audio/wav;base64,' + (await toWav(audioBuffer)),
         };
     } catch (error) {
-        console.error("Error in textToSpeechFlow:", error);
-        // Re-throw the error so the client can handle it
-        throw error;
+        console.error("Text-to-speech API error:", error);
+        // Return null instead of throwing, so the client can handle it gracefully.
+        return { media: null };
     }
   }
 );
