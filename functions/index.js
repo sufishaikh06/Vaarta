@@ -2,20 +2,25 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const sgMail = require("@sendgrid/mail");
+const { defineSecret } = require('firebase-functions/params');
+
+// Define the SendGrid API Key as a secret
+const sendgridApiKey = defineSecret('sendgrid_api_key');
 
 admin.initializeApp();
 const db = admin.firestore();
 
-// Set API key from Firebase config. The key should be set in your Firebase project environment.
-// Run: firebase functions:config:set sendgrid.key="YOUR_SENDGRID_API_KEY"
-sgMail.setApiKey(functions.config().sendgrid.key);
 
 /**
  * Cloud Function to send email when a new application is created.
  */
-exports.sendApplicationEmail = functions.firestore
-  .document("applications/{appId}")
+exports.sendApplicationEmail = functions
+  .runWith({ secrets: [sendgridApiKey] })
+  .firestore.document("applications/{appId}")
   .onCreate(async (snap, context) => {
+    // Set the API key at the start of the function execution
+    sgMail.setApiKey(sendgridApiKey.value());
+    
     const application = snap.data();
     const appId = context.params.appId;
 
@@ -78,3 +83,4 @@ exports.sendApplicationEmail = functions.firestore
       await db.collection("applications").doc(appId).update({ status: "failed", error: error.message });
     }
   });
+
