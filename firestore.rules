@@ -3,43 +3,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow public read for user profiles for login verification
+    // Rules for the 'users' collection
     match /users/{userId} {
+      // Allow anyone to read user data (e.g., for login to check if a user exists)
       allow read: if true;
-      allow write: if false; // Prevent client-side modification of user profiles
+      // Disallow clients from writing to the users collection directly
+      allow write: if false;
     }
 
-    // Allow logged-in users to create applications
-    match /applications/{appId} {
+    // Rules for the 'applications' collection
+    match /applications/{applicationId} {
+      // Allow a user to create an application if they are logged in
       allow create: if request.auth != null;
-      // Other operations (read, update, delete) are denied from the client
+      
+      // Do not allow clients to read, update, or delete applications directly
       allow read, update, delete: if false;
     }
-    
-    // Allow public read for notices, documents, events, and timetable
-    match /notices/{noticeId} {
-      allow read: if true;
-      allow write: if false;
-    }
-    match /documents/{docId} {
-      allow read: if true;
-      allow write: if false;
-    }
-    match /events/{eventId} {
-      allow read: if true;
-      allow write: if false;
-    }
-    match /timetable/{entryId} {
-      allow read: if true;
-      allow write: if false;
-    }
 
-    // Deny access to attendance and marks from client side
-    match /attendance/{attId} {
-      allow read, write: if false;
-    }
-    match /marks/{markId} {
-      allow read, write: if false;
-    }
+    // Default-deny for any other collections not explicitly matched
   }
 }
