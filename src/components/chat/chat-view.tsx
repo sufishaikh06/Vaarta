@@ -105,7 +105,6 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
       };
 
       recognition.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
         toast({ title: "Voice Error", description: `An error occurred: ${event.error}`, variant: "destructive" });
         setIsRecording(false);
       };
@@ -407,7 +406,7 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
 
         toast({
             title: 'Application Sent!',
-            description: 'Your application has been submitted to the faculty for review.',
+            description: 'Your application has been sent to the faculty for review.',
         });
         onConfirm();
 
