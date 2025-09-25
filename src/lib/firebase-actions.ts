@@ -40,7 +40,7 @@ export async function saveApplicationClient(applicationData: ApplicationData) {
             // Emit the error with the global error emitter.
             errorEmitter.emit('permission-error', permissionError);
 
-            // Throw a new error to be caught by the calling function.
-            throw new Error("Failed to save application to the database.");
+            // Re-throw the original, detailed error to be caught by the global listener.
+            throw permissionError;
         });
 }
