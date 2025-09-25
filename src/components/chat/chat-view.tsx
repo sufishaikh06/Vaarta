@@ -491,18 +491,14 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!user || !application) return;
+    if (!user || !user.id || !application) return;
     setIsSubmitting(true);
     
-    // The try/catch block is removed here to allow the error to bubble up
-    // to the global FirebaseErrorListener.
-    
-    await saveApplicationClient({
-        student_id: user.id,
+    await saveApplicationClient(user.id, {
         type: 'leave',
         content: `Subject: ${application.subject}\n\n${application.body}`,
         status: 'pending',
-        faculty_id: 'placeholder_faculty_id', // This is now a placeholder
+        faculty_id: 'placeholder_faculty_id', // This is a placeholder
         faculty_name: application.facultyName,
         faculty_email: application.facultyEmail,
     });

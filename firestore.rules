@@ -4,68 +4,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Default deny all
+    // Default deny all reads and writes
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // USERS: Allow anyone to read user data for login, but only the user can update their own data.
+    // USERS: Allow public read for login verification, but no writing.
     match /users/{userId} {
       allow read: if true;
-      allow update: if isSignedIn() && isOwner(userId);
-      allow create, delete: if false;
+      allow write: if false;
     }
 
-    // APPLICATIONS: Allow authenticated users to create applications for themselves.
-    // The cloud function will handle updates/status changes.
+    // APPLICATIONS: Allow a user to create an application only for themselves.
+    // No one can read, update, or delete from the client.
     match /applications/{appId} {
-      allow create: if isSignedIn() && isOwner(request.resource.data.student_id);
-      allow read, update, delete: if false; // Deny client-side reads/updates
-    }
-
-    // NOTICES: Allow read for anyone, but write only for authenticated users (faculty).
-    match /notices/{noticeId} {
-        allow read: if true;
-        allow create: if isSignedIn();
-        allow update, delete: if false;
-    }
-
-    // DOCUMENTS: Allow read for anyone, but write only for authenticated users (faculty).
-    match /documents/{docId} {
-        allow read: if true;
-        allow create: if isSignedIn();
-        allow update, delete: if false;
-    }
-
-    // TIMETABLE & ATTENDANCE: Allow read for signed-in users. Deny writes from client.
-    match /timetable/{ttId} {
-        allow read: if isSignedIn();
-        allow write: if false;
-    }
-    match /attendance/{attId} {
-        allow read: if isSignedIn();
-        allow write: if false;
-    }
-
-    // MARKS: Allow read only for the specific user. Deny writes from client.
-    match /marks/{markId} {
-        allow read: if isSignedIn() && isOwner(resource.data.student_id);
-        allow write: if false;
-    }
-
-    // EVENTS: Allow read for anyone. Deny writes.
-    match /events/{eventId} {
-        allow read: if true;
-        allow write: if false;
+      allow create: if request.auth != null && request.resource.data.student_id == request.auth.uid;
+      allow read, update, delete: if false;
     }
   }
 }

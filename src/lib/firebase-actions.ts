@@ -12,15 +12,20 @@ export interface ApplicationData {
     type: string;
     content: string;
     status: 'pending' | 'approved' | 'rejected';
-    faculty_id: string; // Keep for potential linking, but email is now primary
+    faculty_id: string; 
     faculty_name: string;
     faculty_email: string;
 }
 
-export async function saveApplicationClient(applicationData: ApplicationData) {
+export async function saveApplicationClient(studentId: string, applicationData: Omit<ApplicationData, 'student_id'>) {
+    if (!studentId) {
+        throw new Error("User is not authenticated.");
+    }
+    
     const applicationsRef = collection(db, 'applications');
-    const dataToSave = {
+    const dataToSave: ApplicationData = {
         ...applicationData,
+        student_id: studentId,
         createdAt: serverTimestamp(),
     };
 
