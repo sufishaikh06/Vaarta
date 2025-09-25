@@ -1,36 +1,72 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
 
     // Rules for 'users' collection
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isOwner(userId);
-    }
-    
-    // Rules for 'applications' collection
-    match /applications/{appId} {
-      allow read: if isSignedIn();
-      allow create; // Allow any client to create for the prototype's chatbot
-      allow update: if true; // Allow the Cloud Function (admin) to update the status
-      allow delete: if false;
+      // Anyone can read user profiles
+      allow read: if true;
+      // Only the owner can update their own profile, nobody can create or delete
+      allow create, delete: if false;
+      allow update: if isOwner(userId);
     }
 
-    // Rules for other collections (read-only for authenticated users)
-    match /{document=**} {
-       allow read: if isSignedIn();
-       allow write: if false; // Default deny all other writes
+    // Rules for 'attendance' collection
+    match /attendance/{attendanceId} {
+      // Only authenticated users can read.
+      allow read: if request.auth != null;
+      // No one can write directly for this prototype.
+      allow write: if false;
+    }
+
+    // Rules for 'marks' collection
+    match /marks/{markId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Rules for 'timetable' collection
+    match /timetable/{timetableId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Rules for 'notices' collection
+    match /notices/{noticeId} {
+      // Allow authenticated users to read notices
+      allow read: if request.auth != null;
+      // Allow authenticated users to create notices (faculty)
+      allow create: if request.auth != null;
+      // No one can update or delete
+      allow update, delete: if false;
+    }
+
+    // Rules for 'applications' collection
+    match /applications/{appId} {
+       // Allow authenticated users to read and create applications
+      allow read, create: if request.auth != null;
+      // Backend services will handle updates. No direct client updates.
+      allow update, delete: if false;
+    }
+
+    // Rules for 'documents' collection
+    match /documents/{docId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+
+    // Rules for 'events' collection
+    match /events/{eventId} {
+      allow read: if request.auth != null;
+      allow write: if false;
     }
   }
 }
