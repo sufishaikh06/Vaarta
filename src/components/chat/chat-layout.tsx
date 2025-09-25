@@ -28,7 +28,7 @@ export function ChatLayout({ role }: { role: UserRole }) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isFabOpen, setIsFabOpen] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState<number | null>(null);
-  const [audioLoading, setAudioLoading]_useState<number | null>(null);
+  const [audioLoading, setAudioLoading] = useState<number | null>(null);
   
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
