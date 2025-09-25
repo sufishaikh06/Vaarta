@@ -3,57 +3,52 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can read their own user profile
+    // Users can read their own profile, and anyone can query the list for login purposes.
     match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      // Allow any authenticated user to create their own user document
-      allow create: if request.auth != null;
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
-    
-    // Anyone can query the users collection to log in. 
-    // This is acceptable for a prototype but should be tightened in production.
-    match /users/{document=**} {
+
+    // Allow anyone to read non-sensitive collections.
+    match /timetable/{docId} {
       allow read: if true;
     }
-
-    // Students can create applications
-    // Students can read their own applications
-    // Faculty can read applications addressed to them
+    match /notices/{docId} {
+      allow read: if true;
+    }
+    match /events/{docId} {
+      allow read: if true;
+    }
+    match /documents/{docId} {
+      allow read: if true;
+    }
+    
+    // Application-specific rules
     match /applications/{appId} {
-      allow create: if request.auth != null && request.resource.data.student_id == request.auth.uid;
       allow read: if request.auth != null && (
-                    request.resource.data.student_id == request.auth.uid ||
-                    request.resource.data.faculty_id == request.auth.uid 
-                  );
-      // No one can update or delete from the client
-      allow update, delete: if false;
+        request.auth.uid == resource.data.student_id ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'faculty'
+      );
+      // Allow creation for this prototype, as we don't have real Firebase auth on the client.
+      allow create;
+      allow update, delete: if false; // Nobody can update or delete
     }
 
-    // Allow read-only access for authenticated users to other collections
-    match /attendance/{document=**} {
-      allow read: if request.auth != null;
-      allow write: if false; // Disallow client-side writes
-    }
-    match /marks/{document=**} {
-      allow read: if request.auth != null;
+    // Attendance & Marks can only be read by the student or their parent.
+    match /attendance/{attId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.student_id ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.child_id == resource.data.student_id
+      );
       allow write: if false;
     }
-    match /timetable/{document=**} {
-      allow read: if request.auth != null;
+
+    match /marks/{markId} {
+       allow read: if request.auth != null && (
+        request.auth.uid == resource.data.student_id ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.child_id == resource.data.student_id
+      );
       allow write: if false;
-    }
-    match /notices/{document=**} {
-      allow read: if request.auth != null;
-      // Allow faculty to post notices
-      allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'faculty';
-    }
-    match /documents/{document=**} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'faculty';
-    }
-    match /events/{document=S**} {
-        allow read: if request.auth != null;
-        allow write: if false;
     }
   }
 }
