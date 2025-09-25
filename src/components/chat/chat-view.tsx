@@ -168,7 +168,6 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
             question: userInput,
             userId: user?.id,
             userRole: user?.role,
-            language: selectedLanguage.name,
         });
         addMessage('bot', output.answer);
       } catch (e) {
@@ -194,6 +193,8 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     if (isRecording) {
       recognitionRef.current.stop();
     } else {
+      // Update language before starting
+      recognitionRef.current.lang = selectedLanguage.code;
       recognitionRef.current.start();
     }
     setIsRecording(!isRecording);
@@ -261,9 +262,14 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex gap-1">
              <Popover>
                 <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Languages className="h-5 w-5 text-muted-foreground" />
-                    </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Languages className="h-5 w-5 text-muted-foreground" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Voice Language</TooltipContent>
+                  </Tooltip>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-2">
                     <div className="flex flex-col gap-1">
