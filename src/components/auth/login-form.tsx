@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -53,26 +52,23 @@ export function LoginForm({ role, onBack, onNavigateToSignup }: LoginFormProps) 
     setIsLoading(true);
     
     try {
-      // For this prototype, we are not checking the password.
-      // A real application would use Firebase Authentication for secure password handling.
-
+      // In a real app, you'd use Firebase Auth. Here, we query Firestore.
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("email", "==", data.email), where("role", "==", role));
       
       const querySnapshot = await getDocs(q);
       
       if (querySnapshot.empty) {
-        throw new Error("No account found with this email for the selected role. Please sign up.");
+        throw new Error("Invalid credentials. No account found with this email for the selected role.");
       }
 
-      // Assuming one user per email/role combo
+      // For this prototype, we're not checking the password, just that the user exists.
       const userDoc = querySnapshot.docs[0];
-      
       const user = { id: userDoc.id, ...userDoc.data() } as AppUser;
       
       toast({
         title: "Login Successful",
-        description: `Welcome, ${user.name}!`,
+        description: `Welcome back, ${user.name}!`,
       });
       login(user);
 
