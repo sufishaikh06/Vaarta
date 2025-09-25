@@ -494,6 +494,9 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
     if (!user || !application) return;
     setIsSubmitting(true);
     
+    // The try/catch block is removed here to allow the error to bubble up
+    // to the global FirebaseErrorListener.
+    
     await saveApplicationClient({
         student_id: user.id,
         type: 'leave',
