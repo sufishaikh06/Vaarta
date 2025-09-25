@@ -25,11 +25,16 @@ exports.sendApplicationEmail = functions
     const appId = context.params.appId;
 
     try {
-      // 1. Fetch student's name from 'users' collection
-      const studentRef = db.collection("users").doc(application.student_id);
-      const studentDoc = await studentRef.get();
-      // Use the student's name if found, otherwise use a fallback.
-      const studentName = studentDoc.exists ? studentDoc.data().name : "A Student";
+      // 1. Fetch student's name from 'users' collection - using a fallback for robustness
+      let studentName = "A Student"; // Default fallback
+      if (application.student_id) {
+          const studentRef = db.collection("users").doc(application.student_id);
+          const studentDoc = await studentRef.get();
+          if (studentDoc.exists && studentDoc.data().name) {
+              studentName = studentDoc.data().name;
+          }
+      }
+
 
       // 2. Get faculty's email and name directly from the application document
       const facultyEmail = application.faculty_email;
@@ -49,7 +54,7 @@ exports.sendApplicationEmail = functions
         text: `
           Dear ${facultyName},
 
-          You have received a new application from ${studentName} (ID: ${application.student_id}).
+          You have received a new application from ${studentName}.
 
           Application Content:
           --------------------
@@ -60,7 +65,7 @@ exports.sendApplicationEmail = functions
         `,
         html: `
           <p>Dear ${facultyName},</p>
-          <p>You have received a new application from <strong>${studentName}</strong> (ID: ${application.student_id}).</p>
+          <p>You have received a new application from <strong>${studentName}</strong>.</p>
           <hr>
           <h3>Application Content:</h3>
           <p style="white-space: pre-wrap;">${application.content}</p>
@@ -83,4 +88,3 @@ exports.sendApplicationEmail = functions
       await db.collection("applications").doc(appId).update({ status: "failed", error: error.message });
     }
   });
-
