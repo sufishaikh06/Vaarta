@@ -105,7 +105,9 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
       };
 
       recognition.onerror = (event) => {
-        toast({ title: "Voice Error", description: `An error occurred: ${event.error}`, variant: "destructive" });
+        if (event.error !== 'network') {
+            toast({ title: "Voice Error", description: `An error occurred: ${event.error}`, variant: "destructive" });
+        }
         setIsRecording(false);
       };
 
@@ -283,7 +285,17 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
                 </div>
               ) : (
                 <div className="flex-grow">
-                  {msg.text && <p className="text-sm whitespace-pre-wrap">{msg.text}</p>}
+                  {msg.text && (
+                    <div
+                      className="prose prose-sm text-foreground max-w-none"
+                      dangerouslySetInnerHTML={{
+                        __html: msg.text
+                          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                          .replace(/(\d+)\./g, '<br/>$1.')
+                      }}
+                    />
+                  )}
                   {msg.component}
                 </div>
               )}
@@ -451,3 +463,4 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
     </div>
   );
 }
+
