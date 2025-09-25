@@ -12,7 +12,6 @@ export interface ApplicationData {
 }
 
 export async function saveApplicationClient(applicationData: ApplicationData) {
-    'use client';
     try {
         const docRef = await addDoc(collection(db, "applications"), {
             ...applicationData,
