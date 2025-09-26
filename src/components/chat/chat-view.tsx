@@ -571,5 +571,3 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
     </div>
   );
 }
-
-    
