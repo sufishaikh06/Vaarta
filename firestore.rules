@@ -3,27 +3,36 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Rules for the 'users' collection
-    match /users/{userId} {
-      // Allow anyone to create a user document (for Sign Up)
-      allow create: if true;
-      
-      // Allow anyone to query the users collection (for Login)
-      allow list: if true;
+    // --- Rules for the 'users' collection ---
 
-      // Only allow a user to read or update their OWN document
+    // These rules apply to the entire collection (for queries and creating new documents)
+    match /users/{document=**} {
+      // Allow anyone to create a user (Sign Up) and query the collection (Login)
+      allow create, list: if true;
+    }
+
+    // These rules apply to a specific user document
+    match /users/{userId} {
+      // A logged-in user can only read or update their OWN document.
       allow read, update: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Rules for the 'applications' collection
+    // --- Rules for other collections ---
+
+    // Allow a logged-in user to create an application only for themselves.
     match /applications/{appId} {
-      // Only allow a logged-in user to create an application for themselves
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.student_id;
+      allow create: if request.auth != null && request.resource.data.student_id == request.auth.uid;
     }
     
-    // Default-deny all other collections/operations
-    match /{document=**} {
-      allow read, write: if false;
+    // Public read access for general college info
+    match /timetable/{doc} {
+      allow read: if true;
+    }
+    match /documents/{doc} {
+      allow read: if true;
+    }
+    match /notices/{doc} {
+      allow read: if true;
     }
   }
 }
