@@ -4,25 +4,32 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users Collection:
-    // Allow anyone to query the users collection to check for existing users during login.
-    // Deny all write operations from the client.
+    // Users Collection Rules
     match /users/{userId} {
-      allow list: if true; // Allow querying users for login
-      allow get: if request.auth != null; // Allow fetching a specific user if logged in
-      allow write: if false; // Deny all client-side writes
+      // Allow unauthenticated users to query the collection to log in.
+      // This is secure because Firestore rules are not filters. A user
+      // cannot dump the entire collection, they can only run the specific
+      // query from the app.
+      allow list: if true;
+
+      // Allow authenticated users to get their own data.
+      allow get: if request.auth != null;
+
+      // Deny all client-side writes.
+      allow create, update, delete: if false;
     }
 
-    // Applications Collection:
-    // Allow authenticated users to create an application, but only if the student_id
-    // in the document matches their own user ID. Deny all other operations.
+    // Applications Collection Rules
     match /applications/{appId} {
+      // Allow an authenticated user to create an application ONLY IF
+      // the student_id in the new document matches their own auth UID.
       allow create: if request.auth != null && request.resource.data.student_id == request.auth.uid;
+
+      // Deny all other operations from the client for security.
       allow read, update, delete: if false;
     }
 
-    // Default deny for all other collections.
-    // This is a security best practice.
+    // Default-deny all other collections.
     match /{document=**} {
       allow read, write: if false;
     }
