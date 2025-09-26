@@ -1,37 +1,30 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Default deny all reads and writes
-    match /{document=**} {
-      allow read, write: if false;
-    }
 
-    // Allow reading user documents for login, but not listing all users
+    // Users Collection:
+    // Allow anyone to query the users collection to check for existing users during login.
+    // Deny all write operations from the client.
     match /users/{userId} {
-      allow get: if true; 
-      allow list, create, update, delete: if false;
+      allow list: if true; // Allow querying users for login
+      allow get: if request.auth != null; // Allow fetching a specific user if logged in
+      allow write: if false; // Deny all client-side writes
     }
 
-    // Allow authenticated users to create applications for themselves
+    // Applications Collection:
+    // Allow authenticated users to create an application, but only if the student_id
+    // in the document matches their own user ID. Deny all other operations.
     match /applications/{appId} {
       allow create: if request.auth != null && request.resource.data.student_id == request.auth.uid;
       allow read, update, delete: if false;
     }
 
-    // Allow anyone to read timetables, notices, documents, and events
-    match /timetable/{docId} { allow get: if true; }
-    match /notices/{docId} { allow get: if true; }
-    match /documents/{docId} { allow get: if true; }
-    match /events/{docId} { allow get: if true; }
-
-    // Allow authenticated parents/students to read their specific data
-    match /attendance/{docId} {
-      allow get: if request.auth != null;
-    }
-    match /marks/{docId} {
-      allow get: if request.auth != null;
+    // Default deny for all other collections.
+    // This is a security best practice.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
