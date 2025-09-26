@@ -91,7 +91,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
-      recognition.continuous = true;
+      recognition.continuous = false; // Stop after a pause in speech
       recognition.interimResults = true;
       recognition.lang = selectedLanguage.code;
 
@@ -167,11 +167,14 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     if (userInput.toLowerCase().includes('apply for leave')) {
       if (role === 'student') {
         setConversationState('applying_leave_faculty_name');
-        const botMsgId = addMessage('bot', "Sure, I can help with that. Who is the faculty member you want to send this to?");
-        if(lastInputWasVoice) await handlePlayAudio({ id: botMsgId, role: 'bot', text: "Sure, I can help with that. Who is the faculty member you want to send this to?"});
+        const botMsg = { id: 'leave-1', role: 'bot' as const, text: "Sure, I can help with that. Who is the faculty member you want to send this to?" };
+        setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
+        if (lastInputWasVoice) await handlePlayAudio(botMsg);
+
       } else {
-        const botMsgId = addMessage('bot', "This feature is only available for students.");
-        if(lastInputWasVoice) await handlePlayAudio({ id: botMsgId, role: 'bot', text: "This feature is only available for students."});
+        const botMsg = { id: 'leave-err-1', role: 'bot' as const, text: "This feature is only available for students." };
+        setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
+        if (lastInputWasVoice) await handlePlayAudio(botMsg);
       }
     } else if (userInput.toLowerCase().includes('post notice')) {
       if (role === 'faculty') {
@@ -179,8 +182,9 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
         setIsFormOpen(true);
         setMessages(prev => prev.filter(m => !m.isTyping));
       } else {
-        const botMsgId = addMessage('bot', "This feature is only available for faculty members.");
-        if(lastInputWasVoice) await handlePlayAudio({ id: botMsgId, role: 'bot', text: "This feature is only available for faculty members."});
+        const botMsg = { id: 'notice-err-1', role: 'bot' as const, text: "This feature is only available for faculty members." };
+        setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
+        if (lastInputWasVoice) await handlePlayAudio(botMsg);
       }
     } else {
       // Default to RAG flow
@@ -190,14 +194,16 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
             userId: user?.id,
             userRole: user?.role,
         });
-        const botMsgId = addMessage('bot', output.answer);
+        const botMsg = { id: `${Date.now()}`, role: 'bot' as const, text: output.answer };
+        setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
         if (lastInputWasVoice) {
-            await handlePlayAudio({ id: botMsgId, role: 'bot', text: output.answer });
+            await handlePlayAudio(botMsg);
         }
       } catch (e) {
         console.error(e);
-        const botMsgId = addMessage('bot', 'Sorry, I am having trouble connecting to my knowledge base. Please try again in a moment.');
-        if(lastInputWasVoice) await handlePlayAudio({ id: botMsgId, role: 'bot', text: 'Sorry, I am having trouble connecting to my knowledge base. Please try again in a moment.'});
+        const botMsg = { id: 'rag-err-1', role: 'bot' as const, text: 'Sorry, I am having trouble connecting to my knowledge base. Please try again in a moment.' };
+        setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
+        if(lastInputWasVoice) await handlePlayAudio(botMsg);
       }
     }
     setLastInputWasVoice(false); // Reset after handling
@@ -225,8 +231,9 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
               applicationData.current.reason = userInput;
               setConversationState('idle');
               botResponseText = "Thank you. I'm drafting the application now based on the details you provided.";
-              const draftMsgId = addMessage('bot', botResponseText);
-              if(lastInputWasVoice) await handlePlayAudio({ id: draftMsgId, role: 'bot', text: botResponseText });
+              const draftMsg = {id: 'draft-1', role: 'bot' as const, text: botResponseText };
+              setMessages((prev) => [...prev.filter(m => !m.isTyping), draftMsg]);
+              if(lastInputWasVoice) await handlePlayAudio(draftMsg);
               
               try {
                   const output = await draftApplication({
@@ -254,8 +261,9 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
                                 faculty_name: fullApplicationData.facultyName,
                                 faculty_email: fullApplicationData.facultyEmail,
                             });
-                            const successMsgId = addMessage('bot', `Your application has been sent to ${applicationData.current.facultyName}.`);
-                            if(lastInputWasVoice) await handlePlayAudio({ id: successMsgId, role: 'bot', text: `Your application has been sent to ${applicationData.current.facultyName}.` });
+                            const successMsg = {id: 'success-1', role: 'bot' as const, text: `Your application has been sent to ${applicationData.current.facultyName}.`};
+                            addMessage('bot', successMsg.text);
+                            if(lastInputWasVoice) await handlePlayAudio(successMsg);
                             applicationData.current = {};
                           } catch (error) {
                              addMessage('bot', 'There was a problem submitting your application. Please check the error message and try again.');
@@ -273,8 +281,9 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
               }
               return; // Exit here since we handled the response specially
       }
-      const botMsgId = addMessage('bot', botResponseText);
-      if(lastInputWasVoice) await handlePlayAudio({ id: botMsgId, role: 'bot', text: botResponseText });
+      const botMsg = {id: `${Date.now()}`, role: 'bot' as const, text: botResponseText };
+      setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
+      if(lastInputWasVoice) await handlePlayAudio(botMsg);
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -578,6 +587,5 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
     </div>
   );
 }
-
 
     
