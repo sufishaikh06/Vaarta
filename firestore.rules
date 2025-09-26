@@ -1,37 +1,40 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users Collection Rules
-    match /users/{userId} {
-      // Allow unauthenticated users to query the collection to log in.
-      // This is secure because Firestore rules are not filters. A user
-      // cannot dump the entire collection, they can only run the specific
-      // query from the app.
+    // --- Users Collection ---
+    // Allow anyone to perform a query on the users collection for login.
+    // This rule is placed on the collection path, not the document path.
+    match /users/{document=**} {
       allow list: if true;
+    }
 
-      // Allow authenticated users to get their own data.
-      allow get: if request.auth != null;
-
-      // Deny all client-side writes.
+    // Secure individual user documents.
+    // Only allow a logged-in user to GET their own document. Deny all writes.
+    match /users/{userId} {
+      allow get: if request.auth != null && request.auth.uid == userId;
       allow create, update, delete: if false;
     }
 
-    // Applications Collection Rules
+    // --- Applications Collection ---
+    // Allow authenticated users to create an application ONLY for themselves.
+    // Deny all reads, updates, and deletes from the client.
     match /applications/{appId} {
-      // Allow an authenticated user to create an application ONLY IF
-      // the student_id in the new document matches their own auth UID.
       allow create: if request.auth != null && request.resource.data.student_id == request.auth.uid;
-
-      // Deny all other operations from the client for security.
       allow read, update, delete: if false;
     }
-
-    // Default-deny all other collections.
-    match /{document=**} {
-      allow read, write: if false;
-    }
+    
+    // --- All Other Collections ---
+    // Securely deny all access to any other collections by default.
+    // This catch-all must not interfere with more specific rules above.
+    // We can achieve this by ensuring it's not needed if all collections are specified,
+    // or by structuring it carefully. For now, specific rules are safer.
+    
+    match /attendance/{document=**} { allow read, write: if false; }
+    match /marks/{document=**} { allow read, write: if false; }
+    match /timetable/{document=**} { allow read, write: if false; }
+    match /notices/{document=**} { allow read, write: if false; }
+    match /documents/{document=**} { allow read, write: if false; }
+    match /events/{document=**} { allow read, write: if false; }
   }
 }
