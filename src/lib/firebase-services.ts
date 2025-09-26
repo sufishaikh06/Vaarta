@@ -1,5 +1,5 @@
 
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, orderBy } from 'firebase/firestore';
 import { db } from './firebase';
 
 export interface AttendanceRecord {
@@ -44,4 +44,35 @@ export async function getFacultyInfoForUser(facultyId: string): Promise<string> 
     const uniqueSubjects = [...new Set(subjects)];
 
     return `According to the timetable, ${facultyName} teaches the following subject(s): ${uniqueSubjects.join(', ')}.`;
+}
+
+
+export async function getAcademicCalendarEvents(eventType?: string): Promise<string> {
+    let eventsQuery = query(collection(db, 'academic_calendar'), orderBy('start_date', 'asc'));
+
+    if (eventType) {
+        eventsQuery = query(collection(db, 'academic_calendar'), where('type', '==', eventType), orderBy('start_date', 'asc'));
+    }
+
+    const eventsSnap = await getDocs(eventsQuery);
+
+    if (eventsSnap.empty) {
+        return `I could not find any ${eventType ? eventType + ' ' : ''}events in the academic calendar.`;
+    }
+
+    const events = eventsSnap.docs.map(doc => doc.data());
+    
+    const summary = events.map(event => {
+        const startDate = new Date(event.start_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        const endDate = new Date(event.end_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        let dateInfo = `on **${startDate}**`;
+        if (startDate !== endDate) {
+            dateInfo = `from **${startDate}** to **${endDate}**`;
+        }
+        return `- **${event.event_name}**: Takes place ${dateInfo}. *(${event.details})*`;
+    }).join('\n');
+    
+    const eventTypeName = eventType ? `upcoming ${eventType} ` : '';
+
+    return `Here are the ${eventTypeName}events from the academic calendar:\n${summary}`;
 }

@@ -87,5 +87,49 @@
       "details": "Annual technical festival.",
       "target_group": "all_students"
     }
+  },
+  "academic_calendar": {
+    "event_term_start": {
+      "event_name": "Term Start",
+      "start_date": "2023-08-01T09:00:00Z",
+      "end_date": "2023-08-01T17:00:00Z",
+      "type": "academic",
+      "details": "Start of the new academic term for all students."
+    },
+    "event_mid_term": {
+      "event_name": "Mid-Term Examinations",
+      "start_date": "2023-11-15T09:00:00Z",
+      "end_date": "2023-11-25T17:00:00Z",
+      "type": "exam",
+      "details": "Mid-term examinations for all departments."
+    },
+    "event_tech_fest": {
+      "event_name": "Tech Fest 2023",
+      "start_date": "2023-11-05T09:00:00Z",
+      "end_date": "2023-11-06T18:00:00Z",
+      "type": "event",
+      "details": "Annual technical festival with various competitions and workshops."
+    },
+    "event_diwali": {
+      "event_name": "Diwali Vacation",
+      "start_date": "2023-11-10T00:00:00Z",
+      "end_date": "2023-11-14T23:59:59Z",
+      "type": "holiday",
+      "details": "The college will remain closed for Diwali."
+    },
+    "event_term_end": {
+      "event_name": "End of Term",
+      "start_date": "2023-12-15T17:00:00Z",
+      "end_date": "2023-12-15T17:00:00Z",
+      "type": "academic",
+      "details": "End of the academic term."
+    },
+    "event_winter_break": {
+      "event_name": "Winter Break",
+      "start_date": "2023-12-16T00:00:00Z",
+      "end_date": "2024-01-02T23:59:59Z",
+      "type": "holiday",
+      "details": "Winter vacation for all students and faculty."
+    }
   }
 }

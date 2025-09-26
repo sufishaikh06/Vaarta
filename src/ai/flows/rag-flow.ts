@@ -9,7 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { getAttendanceForStudent, getFacultyInfoForUser } from '@/lib/firebase-services';
+import { getAttendanceForStudent, getFacultyInfoForUser, getAcademicCalendarEvents } from '@/lib/firebase-services';
 import { z } from 'genkit';
 
 // Define the knowledge base from website content
@@ -83,6 +83,18 @@ const getFacultyInfoTool = ai.defineTool(
   }
 );
 
+const getCalendarEventsTool = ai.defineTool(
+    {
+        name: 'getCalendarEvents',
+        description: 'Get information about academic events, holidays, or exams from the college calendar. Use this tool when asked about dates for events like "mid-term exams", "Diwali vacation", "term start", etc.',
+        inputSchema: z.object({ eventType: z.string().optional().describe("The type of event to filter by (e.g., 'exam', 'holiday', 'event', 'academic').") }),
+        outputSchema: z.string().describe("A summary of the upcoming academic events, including name, dates, and details."),
+    },
+    async (input) => {
+        return await getAcademicCalendarEvents(input.eventType);
+    }
+);
+
 
 const AnswerQuestionInputSchema = z.object({
   question: z.string().describe("The user's question about the college."),
@@ -104,25 +116,26 @@ const prompt = ai.definePrompt({
   name: 'answerQuestionPrompt',
   input: { schema: AnswerQuestionInputSchema },
   output: { schema: AnswerQuestionOutputSchema },
-  tools: [getAttendanceStatusTool, getFacultyInfoTool],
+  tools: [getAttendanceStatusTool, getFacultyInfoTool, getCalendarEventsTool],
   prompt: `You are Vaarta, the AI assistant for Sanjivani College of Engineering.
 Your role is to answer user questions accurately and concisely.
 
 **Instructions:**
 1.  **Language Detection:** First, automatically detect the language of the user's question (e.g., English, Hindi, Marathi).
 2.  **Respond in Same Language:** You MUST respond in the same language you detected. All your analysis and final answers should be in that language.
-3.  **Intent:** Determine the user's intent. Are they asking a general question or asking for personal information?
-4.  **General Questions:** For general questions about the college (e.g., "what is the admission process?"), you MUST answer based *only* on the information provided in the **Knowledge Base** below.
-5.  **Information Not Found:** If the answer is not in the Knowledge Base, you MUST state that you do not have that information, in the detected language. DO NOT invent answers or use external knowledge.
-6.  **Personal Data:** For questions about personal data (e.g., "what is my attendance?", "what subjects do I teach?"), you MUST use the provided tools.
+3.  **Intent:** Determine the user's intent. Are they asking a general question, for personal information, or about the academic calendar?
+4.  **Calendar Questions**: For questions about dates, holidays, exams, or events (e.g., "when are the mid-term exams?", "when is Diwali vacation?"), you MUST use the \`getCalendarEvents\` tool.
+5.  **General Questions:** For general questions about the college (e.g., "what is the admission process?"), you MUST answer based *only* on the information provided in the **Knowledge Base** below.
+6.  **Information Not Found:** If the answer is not in the Knowledge Base or tools, you MUST state that you do not have that information, in the detected language. DO NOT invent answers or use external knowledge.
+7.  **Personal Data:** For questions about personal data (e.g., "what is my attendance?", "what subjects do I teach?"), you MUST use the provided tools.
     - If the user role is 'student' and they ask about attendance, use the \`getAttendanceStatus\` tool with the provided \`userId\` as the 'studentId' parameter.
     - If the user role is 'faculty' and they ask about their info, use the \`getFacultyInfo\` tool with the provided \`userId\` as the 'facultyId' parameter.
-7.  **Login Required:** If the user asks for personal data but is not logged in (i.e., no \`userId\` is provided), you MUST tell them they need to log in to access that information, in the detected language.
-8.  **Formatting:** Format your answers clearly using markdown. 
+8.  **Login Required:** If the user asks for personal data but is not logged in (i.e., no \`userId\` is provided), you MUST tell them they need to log in to access that information, in the detected language.
+9.  **Formatting:** Format your answers clearly using markdown. 
     - Use bullet points (starting with '- ') for lists.
     - Use numbered lists (starting with '1. ', '2. ', etc.) for steps.
     - Use double asterisks (\`**text**\`) for bolding key terms (e.g., "**Admissions Process:**"). Do not use single asterisks.
-9.  **Be Polite:** Be polite, professional, and helpful in all your responses.
+10. **Be Polite:** Be polite, professional, and helpful in all your responses.
 
 **Knowledge Base:**
 ---
