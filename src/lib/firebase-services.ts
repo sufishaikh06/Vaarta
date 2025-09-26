@@ -47,7 +47,7 @@ export async function getFacultyInfoForUser(facultyId: string): Promise<string> 
 }
 
 
-export async function getAcademicCalendarEvents(eventType?: string): Promise<string> {
+export async function getAcademicCalendarEvents(eventType?: string): Promise<any[]> {
     let eventsQuery = query(collection(db, 'academic_calendar'), orderBy('start_date', 'asc'));
 
     if (eventType) {
@@ -57,25 +57,11 @@ export async function getAcademicCalendarEvents(eventType?: string): Promise<str
     const eventsSnap = await getDocs(eventsQuery);
 
     if (eventsSnap.empty) {
-        return `I could not find any ${eventType ? eventType + ' ' : ''}events in the academic calendar.`;
+        return [];
     }
 
-    const events = eventsSnap.docs.map(doc => doc.data());
-    
-    const summary = events.map(event => {
-        const startDate = new Date(event.start_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-        const endDate = event.end_date ? new Date(event.end_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : startDate;
-
-        let dateInfo = `on **${startDate}**`;
-        if (startDate !== endDate) {
-            dateInfo = `from **${startDate}** to **${endDate}**`;
-        }
-        return `- **${event.event_name}**: Takes place ${dateInfo}.`;
-    }).join('\n');
-    
-    const eventTypeName = eventType ? `upcoming ${eventType} ` : '';
-
-    return `Here are the ${eventTypeName}events from the academic calendar:\n${summary}`;
+    // Return the raw data. The AI will format it.
+    return eventsSnap.docs.map(doc => doc.data());
 }
 
     

@@ -39,7 +39,7 @@ The admissions process consists of three main steps:
 - **Information Technology**: Deals with the use of computers and software to manage information, with specializations in data science, cloud computing, and IoT.
 - **Mechanical Engineering**: Applies principles of engineering, physics, and materials science for the design and manufacturing of mechanical systems.
 - **Civil Engineering**: Deals with the design, construction, and maintenance of the physical and naturally built environment.
-- **Chemical Engineering**: Involves the production and manufacturing of products through chemical processes.
+- Cehmical Engineering**: Involves the production and manufacturing of products through chemical processes.
 - **Biotechnology**: Combines biology with technology to create products for healthcare, agriculture, and environmental applications.
 
 ## Placements
@@ -88,7 +88,12 @@ const getCalendarEventsTool = ai.defineTool(
         name: 'getCalendarEvents',
         description: 'Get information about academic events, holidays, or exams from the college calendar. Use this tool when asked about dates for events like "mid-term exams", "Diwali vacation", "term start", etc.',
         inputSchema: z.object({ eventType: z.string().optional().describe("The type of event to filter by (e.g., 'exam', 'holiday', 'event', 'academic').") }),
-        outputSchema: z.string().describe("A summary of the upcoming academic events, including name, dates, and details."),
+        outputSchema: z.array(z.object({
+          event_name: z.string(),
+          start_date: z.string(),
+          end_date: z.string(),
+          type: z.string(),
+        })).describe("An array of raw academic event objects, including name, dates, and type."),
     },
     async (input) => {
         return await getAcademicCalendarEvents(input.eventType);
@@ -124,9 +129,9 @@ Your role is to answer user questions accurately and concisely.
 1.  **Language Detection:** First, automatically detect the language of the user's question (e.g., English, Hindi, Marathi).
 2.  **Respond in Same Language:** You MUST respond in the same language you detected. All your analysis and final answers should be in that language.
 3.  **Intent:** Determine the user's intent. Are they asking a general question, for personal information, or about the academic calendar?
-4.  **Calendar Questions**: For questions about dates, holidays, exams, or events (e.g., "when are the mid-term exams?", "when is Diwali vacation?", "when is the CIA-1 test?"), you MUST use the \`getCalendarEvents\` tool.
+4.  **Calendar Questions**: For questions about dates, holidays, exams, or events (e.g., "when are the mid-term exams?", "when is Diwali vacation?", "when is the CIA-1 test?"), you MUST use the \`getCalendarEvents\` tool. The tool returns raw data; you must format this data into a friendly, human-readable list in the user's detected language. Format dates appropriately for the language.
 5.  **General Questions:** For general questions about the college (e.g., "what is the admission process?"), you MUST answer based *only* on the information provided in the **Knowledge Base** below.
-6.  **Information Not Found:** If the answer is not in the Knowledge Base or tools, you MUST state that you do not have that information, in the detected language. DO NOT invent answers or use external knowledge.
+6.  **Information Not Found:** If the answer is not in the Knowledge Base or tools, you MUST state that you do not have that information, in the detected language. If a tool returns an empty list, inform the user you could not find any relevant events. DO NOT invent answers or use external knowledge.
 7.  **Personal Data:** For questions about personal data (e.g., "what is my attendance?", "what subjects do I teach?"), you MUST use the provided tools.
     - If the user role is 'student' and they ask about attendance, use the \`getAttendanceStatus\` tool with the provided \`userId\` as the 'studentId' parameter.
     - If the user role is 'faculty' and they ask about their info, use the \`getFacultyInfo\` tool with the provided \`userId\` as the 'facultyId' parameter.
