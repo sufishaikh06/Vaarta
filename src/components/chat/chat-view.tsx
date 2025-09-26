@@ -143,8 +143,9 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
 
   const addMessage = (role: 'user' | 'bot', text?: string, component?: React.ReactNode) => {
     const id = `${Date.now()}-${Math.random()}`;
-    setMessages((prev) => [...prev.filter(m => !m.isTyping), { id, role, text, component }]);
-    return id;
+    const newMessage = { id, role, text, component };
+    setMessages((prev) => [...prev.filter(m => !m.isTyping), newMessage]);
+    return newMessage;
   };
   
   const addTypingIndicator = () => {
@@ -159,9 +160,15 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     setInput('');
     addTypingIndicator();
 
+    const wasVoiceInput = lastInputWasVoice;
+    if (lastInputWasVoice) {
+      setLastInputWasVoice(false);
+    }
+
     // Check for conversational state first
     if (conversationState !== 'idle') {
-        await handleLeaveApplicationConversation(userInput);
+        const botMsg = await handleLeaveApplicationConversation(userInput);
+        if (wasVoiceInput && botMsg) await handlePlayAudio(botMsg);
         return;
     }
 
@@ -171,12 +178,11 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
         setConversationState('applying_leave_faculty_name');
         const botMsg = { id: 'leave-1', role: 'bot' as const, text: "Sure, I can help with that. Who is the faculty member you want to send this to?" };
         setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
-        if (lastInputWasVoice) await handlePlayAudio(botMsg);
-
+        if (wasVoiceInput) await handlePlayAudio(botMsg);
       } else {
         const botMsg = { id: 'leave-err-1', role: 'bot' as const, text: "This feature is only available for students." };
         setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
-        if (lastInputWasVoice) await handlePlayAudio(botMsg);
+        if (wasVoiceInput) await handlePlayAudio(botMsg);
       }
     } else if (userInput.toLowerCase().includes('post notice')) {
       if (role === 'faculty') {
@@ -186,7 +192,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
       } else {
         const botMsg = { id: 'notice-err-1', role: 'bot' as const, text: "This feature is only available for faculty members." };
         setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
-        if (lastInputWasVoice) await handlePlayAudio(botMsg);
+        if (wasVoiceInput) await handlePlayAudio(botMsg);
       }
     } else {
       // Default to RAG flow
@@ -196,46 +202,45 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
             userId: user?.id,
             userRole: user?.role,
         });
-        const botMsg = { id: `${Date.now()}`, role: 'bot' as const, text: output.answer };
-        setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
-        if (lastInputWasVoice) {
+        const botMsg = addMessage('bot', output.answer);
+        if (wasVoiceInput) {
             await handlePlayAudio(botMsg);
         }
       } catch (e) {
         console.error(e);
-        const botMsg = { id: 'rag-err-1', role: 'bot' as const, text: 'Sorry, I am having trouble connecting to my knowledge base. Please try again in a moment.' };
-        setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
-        if(lastInputWasVoice) await handlePlayAudio(botMsg);
+        const botMsg = addMessage('bot', 'Sorry, I am having trouble connecting to my knowledge base. Please try again in a moment.');
+        if(wasVoiceInput) await handlePlayAudio(botMsg);
       }
     }
-    setLastInputWasVoice(false); // Reset after handling
   };
 
   const handleLeaveApplicationConversation = async (userInput: string) => {
       let botResponseText = '';
+      let botMsg: Message | null = null;
       switch (conversationState) {
           case 'applying_leave_faculty_name':
               applicationData.current.facultyName = userInput;
               setConversationState('applying_leave_faculty_email');
               botResponseText = `Got it. What is ${userInput}'s email address?`;
+              botMsg = addMessage('bot', botResponseText);
               break;
           case 'applying_leave_faculty_email':
               applicationData.current.facultyEmail = userInput;
               setConversationState('applying_leave_subject');
               botResponseText = "Great. What should be the subject of the email?";
+              botMsg = addMessage('bot', botResponseText);
               break;
           case 'applying_leave_subject':
               applicationData.current.subject = userInput;
               setConversationState('applying_leave_reason');
               botResponseText = "Perfect. Now, please tell me the reason for your leave.";
+              botMsg = addMessage('bot', botResponseText);
               break;
           case 'applying_leave_reason':
               applicationData.current.reason = userInput;
               setConversationState('idle');
               botResponseText = "Thank you. I'm drafting the application now based on the details you provided.";
-              const draftMsg = {id: 'draft-1', role: 'bot' as const, text: botResponseText };
-              setMessages((prev) => [...prev.filter(m => !m.isTyping), draftMsg]);
-              if(lastInputWasVoice) await handlePlayAudio(draftMsg);
+              botMsg = addMessage('bot', botResponseText);
               
               try {
                   const output = await draftApplication({
@@ -263,8 +268,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
                                 faculty_name: fullApplicationData.facultyName,
                                 faculty_email: fullApplicationData.facultyEmail,
                             });
-                            const successMsg = {id: 'success-1', role: 'bot' as const, text: `Your application has been sent to ${applicationData.current.facultyName}.`};
-                            addMessage('bot', successMsg.text);
+                            const successMsg = addMessage('bot', `Your application has been sent to ${applicationData.current.facultyName}.`);
                             if(lastInputWasVoice) await handlePlayAudio(successMsg);
                             applicationData.current = {};
                           } catch (error) {
@@ -281,11 +285,9 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
                   addMessage('bot', 'Sorry, I had trouble drafting the application. Please try again.');
                   applicationData.current = {};
               }
-              return; // Exit here since we handled the response specially
+              return botMsg; // Return the initial "drafting now" message
       }
-      const botMsg = {id: `${Date.now()}`, role: 'bot' as const, text: botResponseText };
-      setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
-      if(lastInputWasVoice) await handlePlayAudio(botMsg);
+      return botMsg;
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
