@@ -2,7 +2,7 @@
 'use client';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Users, GraduationCap, Building, User } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChatView } from './chat-view';
 import { cn } from '@/lib/utils';
 import { VaartaLogo } from '../icons';
@@ -24,30 +24,38 @@ type ViewState = 'role-selection' | 'login' | 'signup' | 'chat';
 
 export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
   const { user, login, logout } = useAuth();
-  const [selectedRole, setSelectedRole] = useState<UserRole>('guest');
-  const [viewState, setViewState] = useState<ViewState>('role-selection');
+  const [selectedRole, setSelectedRole] = useState<UserRole>('student');
+  // const [viewState, setViewState] = useState<ViewState>('role-selection');
   const fabIcon = imageData.chatbot.fabIcon;
+
+  // Bypass login/signup and default to a student user for the presentation
+  useEffect(() => {
+    if (!user && isOpen) {
+      login({ id: 'user_student_1', name: 'Rohan Sharma', email: 'rohan.sharma@example.com', role: 'student' });
+    }
+  }, [isOpen, user, login]);
+
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
     if (role === 'guest') {
       login({ id: 'guest', name: 'Guest', email: '', role: 'guest' });
     } else {
-      setViewState('login');
+      // setViewState('login');
     }
   };
 
   const handleLogout = () => {
     logout();
-    setViewState('role-selection');
+    // setViewState('role-selection');
   };
   
   const handleBackToRoleSelection = () => {
-    setViewState('role-selection');
+    // setViewState('role-selection');
   };
 
-  const navigateToSignup = () => setViewState('signup');
-  const navigateToLogin = () => setViewState('login');
+  const navigateToSignup = () => {}; // setViewState('signup');
+  const navigateToLogin = () => {}; // setViewState('login');
 
   const roles = [
     { id: 'student', name: 'Student', icon: <GraduationCap /> },
@@ -57,10 +65,16 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
   ];
 
   // Determine the current view
-  let currentView: ViewState = viewState;
-  if (user) {
-    currentView = 'chat';
+  let currentView: ViewState = 'chat'; // Bypassed: always chat
+  if (!user) {
+    // Briefly show a loading state while the default user is being logged in
+    return (
+        <div className="fixed bottom-8 right-8 bg-primary text-primary-foreground rounded-full w-20 h-20 flex items-center justify-center shadow-lg z-50">
+          <p>Loading...</p>
+        </div>
+    );
   }
+
 
   return (
     <>
@@ -102,62 +116,6 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
             {/* Main Content */}
             <div className="flex-grow bg-background flex flex-col overflow-y-auto">
               <AnimatePresence mode="wait">
-                {currentView === 'role-selection' && (
-                  <motion.div
-                    key="role-selection"
-                    initial={{ opacity: 0, x: -50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 50 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex flex-col items-center justify-center h-full p-8 text-center"
-                  >
-                    <h3 className="text-2xl font-bold text-foreground mb-2">Welcome to Vaarta</h3>
-                    <p className="text-muted-foreground mb-8">Please select your role to get started.</p>
-                    <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
-                        {roles.map((r) => (
-                            <button key={r.id} onClick={() => handleRoleSelect(r.id as UserRole)} className="flex flex-col items-center justify-center gap-2 p-6 bg-secondary hover:bg-accent rounded-lg transition-colors duration-200 group">
-                                <div className="h-12 w-12 text-primary group-hover:scale-110 transition-transform">{r.icon}</div>
-                                <span className="font-semibold text-foreground">{r.name}</span>
-                            </button>
-                        ))}
-                    </div>
-                  </motion.div>
-                )}
-
-                {currentView === 'login' && (
-                  <motion.div
-                    key="login"
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -50 }}
-                    transition={{ duration: 0.3 }}
-                    className="h-full"
-                  >
-                      <LoginForm 
-                        role={selectedRole}
-                        onBack={handleBackToRoleSelection} 
-                        onNavigateToSignup={navigateToSignup}
-                      />
-                  </motion.div>
-                )}
-                
-                {currentView === 'signup' && (
-                  <motion.div
-                    key="signup"
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -50 }}
-                    transition={{ duration: 0.3 }}
-                    className="h-full"
-                  >
-                      <SignUpForm
-                        role={selectedRole}
-                        onBack={navigateToLogin}
-                        onNavigateToLogin={navigateToLogin}
-                      />
-                  </motion.div>
-                )}
-
                 {currentView === 'chat' && user && (
                   <motion.div
                     key="chat"
@@ -166,7 +124,7 @@ export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: ()
                     transition={{ duration: 0.3, delay: 0.2 }}
                     className="h-full flex flex-col"
                   >
-                      <ChatView role={user.role} onLogout={handleLogout} />
+                      <ChatView role={user.role} onLogout={onToggle} />
                   </motion.div>
                 )}
               </AnimatePresence>
