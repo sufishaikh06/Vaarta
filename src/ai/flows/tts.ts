@@ -74,7 +74,7 @@ const textToSpeechFlow = ai.defineFlow(
                     voiceConfig: {
                         prebuiltVoiceConfig: {voiceName: 'Algenib'},
                     },
-                    languageCode: languageCode || 'en-US',
+                    languageCode: languageCode,
                 },
             },
             prompt: text,
