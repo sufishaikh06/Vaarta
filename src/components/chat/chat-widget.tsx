@@ -25,15 +25,14 @@ type ViewState = 'role-selection' | 'login' | 'signup' | 'chat';
 export function ChatWidget({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
   const { user, login, logout } = useAuth();
   const [selectedRole, setSelectedRole] = useState<UserRole>('student');
-  // const [viewState, setViewState] = useState<ViewState>('role-selection');
   const fabIcon = imageData.chatbot.fabIcon;
 
   // Bypass login/signup and default to a student user for the presentation
   useEffect(() => {
-    if (!user && isOpen) {
+    if (!user) {
       login({ id: 'user_student_1', name: 'Rohan Sharma', email: 'rohan.sharma@example.com', role: 'student' });
     }
-  }, [isOpen, user, login]);
+  }, [user, login]);
 
 
   const handleRoleSelect = (role: UserRole) => {
