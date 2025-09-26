@@ -173,12 +173,17 @@ const answerQuestionFlow = ai.defineFlow(
       return output!;
     } catch (error) {
       console.error('Error in answerQuestionFlow:', error);
-      // Check for specific service unavailable error
-      if (error instanceof Error && error.message.includes('503')) {
-        return { answer: "I'm sorry, but the AI service is currently busy. Please try your request again in a moment." };
+      let errorMessage = "Sorry, I am having trouble connecting to my knowledge base. Please try again in a moment.";
+
+      if (error instanceof Error) {
+        if (error.message.includes('503')) {
+            errorMessage = "I'm sorry, but the AI service is currently busy. Please try your request again in a moment.";
+        } else if (error.message.includes('PERMISSION_DENIED')) {
+            errorMessage = "It seems I don't have the right permissions to access some information. Please check the database security rules.";
+        }
       }
-      // Return a generic error message for other issues
-      return { answer: "Sorry, I am having trouble connecting to my knowledge base. Please try again in a moment." };
+      
+      return { answer: errorMessage };
     }
   }
 );
