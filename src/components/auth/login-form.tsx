@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,47 +43,45 @@ export function LoginForm({ role, onBack, onNavigateToSignup }: LoginFormProps) 
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     
     try {
-      // 1. Query Firestore for a user with the matching email and role
       const usersRef = collection(db, "users");
+      // This is the correct query: it checks for a user with the matching email and role.
       const q = query(usersRef, where("email", "==", data.email), where("role", "==", role));
       
       const querySnapshot = await getDocs(q);
       
-      // 2. Check if a user was found
       if (querySnapshot.empty) {
         toast({
           title: "Login Failed",
-          description: "Invalid credentials. No account found with this email for the selected role.",
+          description: "No account found with this email for the selected role. Please check your credentials or sign up.",
           variant: "destructive",
         });
-        setIsLoading(false);
         return;
       }
 
-      // 3. For this prototype, we're not checking the password, just that the user exists.
+      // In this prototype, we assume password is correct if the user exists.
       const userDoc = querySnapshot.docs[0];
       const user = { id: userDoc.id, ...userDoc.data() } as AppUser;
       
+      login(user);
       toast({
         title: "Login Successful",
         description: `Welcome back, ${user.name}!`,
       });
-      login(user);
 
     } catch (error: any) {
+       console.error("Login error:", error);
        toast({
           title: "Login Failed",
-          description: error.message || "An unexpected error occurred during login. Please check console.",
+          description: error.code === 'permission-denied' 
+            ? "Missing or insufficient permissions. Please check Firestore rules."
+            : "An unexpected error occurred. Please try again.",
           variant: "destructive",
         });
     } finally {
@@ -105,7 +104,7 @@ export function LoginForm({ role, onBack, onNavigateToSignup }: LoginFormProps) 
             name="email"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Email / ERP ID</FormLabel>
+                <FormLabel>Email</FormLabel>
                 <FormControl>
                     <Input placeholder="Enter your email" {...field} />
                 </FormControl>

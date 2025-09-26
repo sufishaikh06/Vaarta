@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import type { UserRole, AppUser } from "../chat/chat-widget";
-import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { addDoc, collection, getDocs, query, where, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 
@@ -43,52 +44,51 @@ export function SignUpForm({ role, onBack, onNavigateToLogin }: SignUpFormProps)
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-    },
+    defaultValues: { name: "", email: "", password: "" },
   });
 
   const onSubmit = async (data: SignUpFormValues) => {
     setIsLoading(true);
     try {
-        // Check if user already exists
         const usersRef = collection(db, "users");
+        // 1. Check if a user with this email already exists
         const q = query(usersRef, where("email", "==", data.email));
         const querySnapshot = await getDocs(q);
 
         if (!querySnapshot.empty) {
             toast({
                 title: "Sign Up Failed",
-                description: "An account with this email already exists.",
+                description: "An account with this email already exists. Please login instead.",
                 variant: "destructive",
             });
-            setIsLoading(false);
             return;
         }
 
-        // Create new user
+        // 2. Create the new user object
         const newUser: Omit<AppUser, 'id'> = {
             name: data.name,
             email: data.email,
             role: role,
+            createdAt: serverTimestamp(), // Add a timestamp for good practice
         };
 
-        const docRef = await addDoc(collection(db, "users"), newUser);
-        
-        toast({
-            title: "Account Created!",
-            description: "You have been successfully signed up.",
-        });
+        // 3. Add the user to Firestore
+        const docRef = await addDoc(usersRef, newUser);
         
         login({ ...newUser, id: docRef.id });
 
+        toast({
+            title: "Account Created!",
+            description: "You have been successfully signed up and logged in.",
+        });
+        
     } catch (error: any) {
-        console.error("Error adding document: ", error);
+        console.error("Signup error: ", error);
         toast({
             title: "Sign Up Failed",
-            description: error.message || "Could not create your account. Please try again.",
+            description: error.code === 'permission-denied' 
+              ? "Missing or insufficient permissions. Please check Firestore rules."
+              : "Could not create your account. Please try again.",
             variant: "destructive",
         });
     } finally {
@@ -124,7 +124,7 @@ export function SignUpForm({ role, onBack, onNavigateToLogin }: SignUpFormProps)
                 name="email"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Email / ERP ID</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                         <Input placeholder="Enter your email" {...field} />
                     </FormControl>
@@ -150,7 +150,7 @@ export function SignUpForm({ role, onBack, onNavigateToLogin }: SignUpFormProps)
                                 type="button" 
                                 variant="ghost" 
                                 size="icon" 
-                                className="absolute top-1/2 right-2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                                className="absolute top-1.2 right-2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
                                 onClick={() => setShowPassword(prev => !prev)}
                             >
                                 {showPassword ? <EyeOff /> : <Eye />}
