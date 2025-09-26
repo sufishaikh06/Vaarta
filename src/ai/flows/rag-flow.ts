@@ -163,16 +163,22 @@ const answerQuestionFlow = ai.defineFlow(
     outputSchema: AnswerQuestionOutputSchema,
   },
   async (input) => {
-    // This mapping allows the prompt to use a generic 'userId' from the frontend,
-    // and we can pass the correct parameter name to the tool.
-    const toolInput = {
-      ...input,
-      studentId: input.userId, // Map userId to studentId for getAttendanceStatusTool
-      facultyId: input.userId, // Map userId to facultyId for getFacultyInfoTool
-    };
-    const { output } = await prompt(toolInput);
-    return output!;
+    try {
+      const toolInput = {
+        ...input,
+        studentId: input.userId, // Map userId to studentId for getAttendanceStatusTool
+        facultyId: input.userId, // Map userId to facultyId for getFacultyInfoTool
+      };
+      const { output } = await prompt(toolInput);
+      return output!;
+    } catch (error) {
+      console.error('Error in answerQuestionFlow:', error);
+      // Check for specific service unavailable error
+      if (error instanceof Error && error.message.includes('503')) {
+        return { answer: "I'm sorry, but the AI service is currently busy. Please try your request again in a moment." };
+      }
+      // Return a generic error message for other issues
+      return { answer: "Sorry, I am having trouble connecting to my knowledge base. Please try again in a moment." };
+    }
   }
 );
-
-    
