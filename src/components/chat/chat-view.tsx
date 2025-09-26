@@ -75,6 +75,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
   const [audioPlaying, setAudioPlaying] = useState<string | null>(null);
   const [audioLoading, setAudioLoading] = useState<string | null>(null);
   const [conversationState, setConversationState] = useState<ConversationState>('idle');
+  const [lastInputWasVoice, setLastInputWasVoice] = useState(false);
   const applicationData = useRef<Partial<any>>({});
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -108,7 +109,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
       };
 
       recognition.onerror = (event) => {
-        if (event.error !== 'network') {
+        if (event.error !== 'network' && event.error !== 'no-speech') {
             toast({ title: "Voice Error", description: `An error occurred: ${event.error}`, variant: "destructive" });
         }
         setIsRecording(false);
@@ -116,13 +117,18 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
 
       recognition.onend = () => {
         setIsRecording(false);
+        // Automatically send the message if there's content
+        if (input.trim()) {
+            setLastInputWasVoice(true); // Mark that this message came from voice input
+            handleSendMessage(input);
+        }
       };
 
       recognitionRef.current = recognition;
     } else {
         console.warn("Speech Recognition not supported in this browser.");
     }
-  }, [toast, selectedLanguage]);
+  }, [toast, selectedLanguage, input]); // Add input to dependencies
 
   const onFormSubmit = (data: any) => {
     setIsFormOpen(false);
@@ -143,9 +149,10 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     setMessages((prev) => [...prev, { id: 'typing', role: 'bot', isTyping: true }]);
   }
 
-  const handleSendMessage = async () => {
-    if (input.trim() === '') return;
-    const userInput = input;
+  const handleSendMessage = async (messageText?: string) => {
+    const userInput = messageText || input;
+    if (userInput.trim() === '') return;
+    
     addMessage('user', userInput);
     setInput('');
     addTypingIndicator();
@@ -160,9 +167,11 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     if (userInput.toLowerCase().includes('apply for leave')) {
       if (role === 'student') {
         setConversationState('applying_leave_faculty_name');
-        addMessage('bot', "Sure, I can help with that. Who is the faculty member you want to send this to?");
+        const botMsgId = addMessage('bot', "Sure, I can help with that. Who is the faculty member you want to send this to?");
+        if(lastInputWasVoice) await handlePlayAudio({ id: botMsgId, role: 'bot', text: "Sure, I can help with that. Who is the faculty member you want to send this to?"});
       } else {
-        addMessage('bot', "This feature is only available for students.");
+        const botMsgId = addMessage('bot', "This feature is only available for students.");
+        if(lastInputWasVoice) await handlePlayAudio({ id: botMsgId, role: 'bot', text: "This feature is only available for students."});
       }
     } else if (userInput.toLowerCase().includes('post notice')) {
       if (role === 'faculty') {
@@ -170,7 +179,8 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
         setIsFormOpen(true);
         setMessages(prev => prev.filter(m => !m.isTyping));
       } else {
-        addMessage('bot', "This feature is only available for faculty members.");
+        const botMsgId = addMessage('bot', "This feature is only available for faculty members.");
+        if(lastInputWasVoice) await handlePlayAudio({ id: botMsgId, role: 'bot', text: "This feature is only available for faculty members."});
       }
     } else {
       // Default to RAG flow
@@ -180,36 +190,44 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
             userId: user?.id,
             userRole: user?.role,
         });
-        addMessage('bot', output.answer);
+        const botMsgId = addMessage('bot', output.answer);
+        if (lastInputWasVoice) {
+            await handlePlayAudio({ id: botMsgId, role: 'bot', text: output.answer });
+        }
       } catch (e) {
         console.error(e);
-        addMessage('bot', 'Sorry, I am having trouble connecting to my knowledge base. Please try again in a moment.');
+        const botMsgId = addMessage('bot', 'Sorry, I am having trouble connecting to my knowledge base. Please try again in a moment.');
+        if(lastInputWasVoice) await handlePlayAudio({ id: botMsgId, role: 'bot', text: 'Sorry, I am having trouble connecting to my knowledge base. Please try again in a moment.'});
       }
     }
+    setLastInputWasVoice(false); // Reset after handling
   };
 
   const handleLeaveApplicationConversation = async (userInput: string) => {
+      let botResponseText = '';
       switch (conversationState) {
           case 'applying_leave_faculty_name':
               applicationData.current.facultyName = userInput;
               setConversationState('applying_leave_faculty_email');
-              addMessage('bot', `Got it. What is ${userInput}'s email address?`);
+              botResponseText = `Got it. What is ${userInput}'s email address?`;
               break;
           case 'applying_leave_faculty_email':
               applicationData.current.facultyEmail = userInput;
               setConversationState('applying_leave_subject');
-              addMessage('bot', "Great. What should be the subject of the email?");
+              botResponseText = "Great. What should be the subject of the email?";
               break;
           case 'applying_leave_subject':
               applicationData.current.subject = userInput;
               setConversationState('applying_leave_reason');
-              addMessage('bot', "Perfect. Now, please tell me the reason for your leave.");
+              botResponseText = "Perfect. Now, please tell me the reason for your leave.";
               break;
           case 'applying_leave_reason':
               applicationData.current.reason = userInput;
               setConversationState('idle');
-              addMessage('bot', "Thank you. I'm drafting the application now based on the details you provided.");
-
+              botResponseText = "Thank you. I'm drafting the application now based on the details you provided.";
+              const draftMsgId = addMessage('bot', botResponseText);
+              if(lastInputWasVoice) await handlePlayAudio({ id: draftMsgId, role: 'bot', text: botResponseText });
+              
               try {
                   const output = await draftApplication({
                       reason: applicationData.current.reason,
@@ -236,12 +254,10 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
                                 faculty_name: fullApplicationData.facultyName,
                                 faculty_email: fullApplicationData.facultyEmail,
                             });
-                            addMessage('bot', `Your application has been sent to ${applicationData.current.facultyName}.`);
+                            const successMsgId = addMessage('bot', `Your application has been sent to ${applicationData.current.facultyName}.`);
+                            if(lastInputWasVoice) await handlePlayAudio({ id: successMsgId, role: 'bot', text: `Your application has been sent to ${applicationData.current.facultyName}.` });
                             applicationData.current = {};
                           } catch (error) {
-                             // The error is already being handled by the global listener
-                             // which will show a toast and/or an overlay.
-                             // We just need to reset the conversation state here.
                              addMessage('bot', 'There was a problem submitting your application. Please check the error message and try again.');
                              setConversationState('idle');
                              applicationData.current = {};
@@ -255,8 +271,10 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
                   addMessage('bot', 'Sorry, I had trouble drafting the application. Please try again.');
                   applicationData.current = {};
               }
-              break;
+              return; // Exit here since we handled the response specially
       }
+      const botMsgId = addMessage('bot', botResponseText);
+      if(lastInputWasVoice) await handlePlayAudio({ id: botMsgId, role: 'bot', text: botResponseText });
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -275,7 +293,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     if (isRecording) {
       recognitionRef.current.stop();
     } else {
-      // Update language before starting
+      setInput(''); // Clear input before starting a new recording
       recognitionRef.current.lang = selectedLanguage.code;
       recognitionRef.current.start();
     }
@@ -307,7 +325,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
         if(!response || !response.media) {
              toast({ 
                 title: "Text-to-Speech Failed", 
-                description: "Audio generation limit reached. Please try again later or upgrade your plan.",
+                description: "Could not generate audio for this message.",
                 variant: "destructive" 
             });
             setAudioLoading(null);
@@ -431,12 +449,14 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={
+                isRecording ? 'Listening...' :
               conversationState.startsWith('applying_leave')
                 ? `Enter ${conversationState.split('_').slice(2).join(' ')}...`
                 : "Ask me anything, or type 'apply for leave'..."
             }
             className="pr-20 pl-12 min-h-[48px] resize-none"
             rows={1}
+            disabled={isRecording}
           />
            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex gap-1">
              <Popover>
@@ -475,7 +495,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
                 </TooltipTrigger>
                 <TooltipContent>Voice Input ({selectedLanguage.name})</TooltipContent>
             </Tooltip>
-            <Button size="icon" onClick={handleSendMessage} disabled={!input.trim()} className="h-8 w-8">
+            <Button size="icon" onClick={() => handleSendMessage()} disabled={!input.trim() || isRecording} className="h-8 w-8">
               <Send className="h-5 w-5" />
             </Button>
           </div>
@@ -558,3 +578,6 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
     </div>
   );
 }
+
+
+    
