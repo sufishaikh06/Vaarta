@@ -124,7 +124,7 @@ Your role is to answer user questions accurately and concisely.
 1.  **Language Detection:** First, automatically detect the language of the user's question (e.g., English, Hindi, Marathi).
 2.  **Respond in Same Language:** You MUST respond in the same language you detected. All your analysis and final answers should be in that language.
 3.  **Intent:** Determine the user's intent. Are they asking a general question, for personal information, or about the academic calendar?
-4.  **Calendar Questions**: For questions about dates, holidays, exams, or events (e.g., "when are the mid-term exams?", "when is Diwali vacation?"), you MUST use the \`getCalendarEvents\` tool.
+4.  **Calendar Questions**: For questions about dates, holidays, exams, or events (e.g., "when are the mid-term exams?", "when is Diwali vacation?", "when is the CIA-1 test?"), you MUST use the \`getCalendarEvents\` tool.
 5.  **General Questions:** For general questions about the college (e.g., "what is the admission process?"), you MUST answer based *only* on the information provided in the **Knowledge Base** below.
 6.  **Information Not Found:** If the answer is not in the Knowledge Base or tools, you MUST state that you do not have that information, in the detected language. DO NOT invent answers or use external knowledge.
 7.  **Personal Data:** For questions about personal data (e.g., "what is my attendance?", "what subjects do I teach?"), you MUST use the provided tools.
@@ -169,3 +169,5 @@ const answerQuestionFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    

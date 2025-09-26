@@ -89,47 +89,103 @@
     }
   },
   "academic_calendar": {
-    "event_term_start": {
-      "event_name": "Term Start",
-      "start_date": "2023-08-01T09:00:00Z",
-      "end_date": "2023-08-01T17:00:00Z",
-      "type": "academic",
-      "details": "Start of the new academic term for all students."
+    "event_2025_08_08_1": {
+      "start_date": "2025-08-08",
+      "end_date": "2025-08-08",
+      "event_name": "Generation of Attendance & Syllabus Coverage through ERP",
+      "type": "academic_activity"
     },
-    "event_mid_term": {
-      "event_name": "Mid-Term Examinations",
-      "start_date": "2023-11-15T09:00:00Z",
-      "end_date": "2023-11-25T17:00:00Z",
-      "type": "exam",
-      "details": "Mid-term examinations for all departments."
+    "event_2025_08_09_1": {
+      "start_date": "2025-08-09",
+      "end_date": "2025-08-09",
+      "event_name": "Display of First Month Attendance through ERP",
+      "type": "academic_activity"
     },
-    "event_tech_fest": {
-      "event_name": "Tech Fest 2023",
-      "start_date": "2023-11-05T09:00:00Z",
-      "end_date": "2023-11-06T18:00:00Z",
-      "type": "event",
-      "details": "Annual technical festival with various competitions and workshops."
+    "event_2025_08_09_2": {
+      "start_date": "2025-08-09",
+      "end_date": "2025-08-09",
+      "event_name": "Academic Activities Review #1 Meeting (Dean Academics, Director, HoDs, Academic Coordinators)",
+      "type": "meeting"
     },
-    "event_diwali": {
-      "event_name": "Diwali Vacation",
-      "start_date": "2023-11-10T00:00:00Z",
-      "end_date": "2023-11-14T23:59:59Z",
-      "type": "holiday",
-      "details": "The college will remain closed for Diwali."
+    "event_2025_08_11_1": {
+      "start_date": "2025-08-11",
+      "end_date": "2025-08-14",
+      "event_name": "Student Feedback–1 on Teaching–Learning",
+      "type": "feedback"
     },
-    "event_term_end": {
-      "event_name": "End of Term",
-      "start_date": "2023-12-15T17:00:00Z",
-      "end_date": "2023-12-15T17:00:00Z",
-      "type": "academic",
-      "details": "End of the academic term."
+    "event_2025_08_12_1": {
+      "start_date": "2025-08-12",
+      "end_date": "2025-08-12",
+      "event_name": "Attendance communication to parents by Mentors & report submission to Department",
+      "type": "reporting"
     },
-    "event_winter_break": {
-      "event_name": "Winter Break",
-      "start_date": "2023-12-16T00:00:00Z",
-      "end_date": "2024-01-02T23:59:59Z",
-      "type": "holiday",
-      "details": "Winter vacation for all students and faculty."
+    "event_2025_08_27_1": {
+      "start_date": "2025-08-27",
+      "end_date": "2025-08-27",
+      "event_name": "Ganesh Chaturthi (Holiday)",
+      "type": "holiday"
+    },
+    "event_2025_08_28_1": {
+      "start_date": "2025-08-28",
+      "end_date": "2025-08-30",
+      "event_name": "Departmental Days (Feedback to Faculty, ATR, Communication of Student Feedback)",
+      "type": "feedback"
+    },
+    "event_2025_09_01_1": {
+      "start_date": "2025-09-01",
+      "end_date": "2025-09-06",
+      "event_name": "CIA–1 Test",
+      "type": "exam"
+    },
+    "event_2025_09_06_1": {
+      "start_date": "2025-09-06",
+      "end_date": "2025-09-06",
+      "event_name": "Parents’ Meeting #1 (1st Saturday of September)",
+      "type": "parents_meeting"
+    },
+    "event_2025_09_15_1": {
+      "start_date": "2025-09-15",
+      "end_date": "2025-09-15",
+      "event_name": "Departmental Meeting: Student Feedback, Attendance & Syllabus Coverage",
+      "type": "meeting"
+    },
+    "event_2026_01_03_1": {
+      "start_date": "2026-01-03",
+      "end_date": "2026-01-03",
+      "event_name": "Parents’ Meeting #2 (1st Saturday of January)",
+      "type": "parents_meeting"
+    },
+    "event_2026_01_05_1": {
+      "start_date": "2026-01-05",
+      "end_date": "2026-01-10",
+      "event_name": "CIA–2 Test",
+      "type": "exam"
+    },
+    "event_2026_05_02_1": {
+      "start_date": "2026-05-02",
+      "end_date": "2026-05-02",
+      "event_name": "Parents’ Meeting #3 (1st Saturday of May)",
+      "type": "parents_meeting"
+    },
+    "event_2026_05_04_1": {
+      "start_date": "2026-05-04",
+      "end_date": "2026-05-09",
+      "event_name": "CIA–3 Test",
+      "type": "exam"
+    },
+    "event_2026_06_15_1": {
+      "start_date": "2026-06-15",
+      "end_date": "2026-06-27",
+      "event_name": "End Semester Exams",
+      "type": "exam"
+    },
+    "event_2026_09_05_1": {
+      "start_date": "2026-09-05",
+      "end_date": "2026-09-05",
+      "event_name": "Parents’ Meeting #4 (1st Saturday of September)",
+      "type": "parents_meeting"
     }
   }
 }
+
+    

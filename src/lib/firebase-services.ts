@@ -63,16 +63,19 @@ export async function getAcademicCalendarEvents(eventType?: string): Promise<str
     const events = eventsSnap.docs.map(doc => doc.data());
     
     const summary = events.map(event => {
-        const startDate = new Date(event.start_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-        const endDate = new Date(event.end_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        const startDate = new Date(event.start_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        const endDate = event.end_date ? new Date(event.end_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : startDate;
+
         let dateInfo = `on **${startDate}**`;
         if (startDate !== endDate) {
             dateInfo = `from **${startDate}** to **${endDate}**`;
         }
-        return `- **${event.event_name}**: Takes place ${dateInfo}. *(${event.details})*`;
+        return `- **${event.event_name}**: Takes place ${dateInfo}.`;
     }).join('\n');
     
     const eventTypeName = eventType ? `upcoming ${eventType} ` : '';
 
     return `Here are the ${eventTypeName}events from the academic calendar:\n${summary}`;
 }
+
+    
