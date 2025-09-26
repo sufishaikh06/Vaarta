@@ -2,33 +2,46 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- Rules for the 'users' collection ---
-    match /users/{userId} {
-      // Allow anyone to create a user (Sign Up)
+    // PUBLIC-FACING RULES
+    // These are necessary for login and signup to function.
+    match /users/{document=**} {
+      // Allow anyone to query the users collection (for Login)
+      allow list: if true;
+      // Allow anyone to create a user document (for Sign Up)
       allow create: if true;
+    }
 
-      // A logged-in user can read or update ONLY their own document
+    // AUTHENTICATED-ONLY RULES
+    // A user must be logged in to perform these actions.
+    match /users/{userId} {
+      // A user can only read or update their OWN document.
       allow read, update: if request.auth != null && request.auth.uid == userId;
     }
 
-    // --- Rules for other collections ---
-
-    // Allow a logged-in user to create an application only for themselves.
     match /applications/{appId} {
-      allow create: if request.auth != null 
-        && request.resource.data.student_id == request.auth.uid;
+      // A user can only create an application for themselves.
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.student_id;
     }
 
-    // Public read access for general college info
-    match /timetable/{doc} {
+    // DATA-READING RULES
+    // These allow various dashboards to read non-sensitive data.
+    match /attendance/{document=**} {
+      allow read: if request.auth != null;
+    }
+    match /marks/{document=**} {
+      allow read: if request.auth != null;
+    }
+    match /timetable/{document=**} {
+      allow read: if request.auth != null;
+    }
+    match /documents/{document=**} {
+      allow read: if request.auth != null;
+    }
+    match /notices/{document=**} {
       allow read: if true;
     }
-    match /documents/{doc} {
-      allow read: if true;
-    }
-    match /notices/{doc} {
-      allow read: if true;
+    match /events/{document=**} {
+        allow read: if true;
     }
   }
 }
