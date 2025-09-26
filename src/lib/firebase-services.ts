@@ -48,10 +48,16 @@ export async function getFacultyInfoForUser(facultyId: string): Promise<string> 
 
 
 export async function getAcademicCalendarEvents(eventType?: string): Promise<any[]> {
-    let eventsQuery = query(collection(db, 'academic_calendar'), orderBy('start_date', 'asc'));
+    let eventsQuery;
 
     if (eventType) {
-        eventsQuery = query(collection(db, 'academic_calendar'), where('type', '==', eventType), orderBy('start_date', 'asc'));
+        // This query requires a composite index on `type` and `start_date`.
+        // If filtering by type, we can't reliably order by another field without a composite index.
+        // We will remove the orderBy to avoid the error and sort the results in code.
+        eventsQuery = query(collection(db, 'academic_calendar'), where('type', '==', eventType));
+    } else {
+        // This query works with a single-field index on start_date.
+        eventsQuery = query(collection(db, 'academic_calendar'), orderBy('start_date', 'asc'));
     }
 
     const eventsSnap = await getDocs(eventsQuery);
@@ -60,8 +66,11 @@ export async function getAcademicCalendarEvents(eventType?: string): Promise<any
         return [];
     }
 
-    // Return the raw data. The AI will format it.
-    return eventsSnap.docs.map(doc => doc.data());
-}
-
+    const events = eventsSnap.docs.map(doc => doc.data());
     
+    // Sort events in code since we can't rely on Firestore ordering with the filtered query
+    events.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+
+    // Return the raw data. The AI will format it.
+    return events;
+}
