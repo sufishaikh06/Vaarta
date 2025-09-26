@@ -2,46 +2,42 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // PUBLIC-FACING RULES
-    // These are necessary for login and signup to function.
-    match /users/{document=**} {
-      // Allow anyone to query the users collection (for Login)
-      allow list: if true;
-      // Allow anyone to create a user document (for Sign Up)
-      allow create: if true;
-    }
 
-    // AUTHENTICATED-ONLY RULES
-    // A user must be logged in to perform these actions.
+    // Rules for the 'users' collection
     match /users/{userId} {
-      // A user can only read or update their OWN document.
+      // Allow anyone to create a user document (for Sign Up)
+      // Allow anyone to query the users collection (for Login)
+      allow create, list: if true;
+      
+      // Only allow a user to read or update their OWN document
       allow read, update: if request.auth != null && request.auth.uid == userId;
     }
 
+    // Rules for the 'applications' collection
     match /applications/{appId} {
-      // A user can only create an application for themselves.
+      // Only allow a logged-in user to create an application for themselves
       allow create: if request.auth != null && request.auth.uid == request.resource.data.student_id;
-    }
-
-    // DATA-READING RULES
-    // These allow various dashboards to read non-sensitive data.
-    match /attendance/{document=**} {
+      
+      // Allow faculty to read applications (example, needs refinement for specific faculty)
+      // For now, any authenticated user can read, which is NOT production-ready
       allow read: if request.auth != null;
     }
-    match /marks/{document=**} {
-      allow read: if request.auth != null;
-    }
-    match /timetable/{document=**} {
-      allow read: if request.auth != null;
-    }
-    match /documents/{document=**} {
-      allow read: if request.auth != null;
-    }
-    match /notices/{document=**} {
+    
+    // Allow reading from public collections like timetable and documents
+    match /timetable/{docId} {
       allow read: if true;
     }
-    match /events/{document=**} {
-        allow read: if true;
+    match /documents/{docId} {
+      allow read: if true;
+    }
+    match /notices/{docId} {
+      allow read: if true;
+    }
+    match /attendance/{docId} {
+      allow read: if request.auth != null; // Example: only logged-in users can see attendance
+    }
+     match /marks/{docId} {
+      allow read: if request.auth != null; // Example: only logged-in users can see marks
     }
   }
 }
