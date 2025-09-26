@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import type { UserRole, AppUser } from "../chat/chat-widget";
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 
@@ -54,6 +53,22 @@ export function SignUpForm({ role, onBack, onNavigateToLogin }: SignUpFormProps)
   const onSubmit = async (data: SignUpFormValues) => {
     setIsLoading(true);
     try {
+        // Check if user already exists
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("email", "==", data.email));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            toast({
+                title: "Sign Up Failed",
+                description: "An account with this email already exists.",
+                variant: "destructive",
+            });
+            setIsLoading(false);
+            return;
+        }
+
+        // Create new user
         const newUser: Omit<AppUser, 'id'> = {
             name: data.name,
             email: data.email,
@@ -69,11 +84,11 @@ export function SignUpForm({ role, onBack, onNavigateToLogin }: SignUpFormProps)
         
         login({ ...newUser, id: docRef.id });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error adding document: ", error);
         toast({
             title: "Sign Up Failed",
-            description: "Could not create your account. Please try again.",
+            description: error.message || "Could not create your account. Please try again.",
             variant: "destructive",
         });
     } finally {

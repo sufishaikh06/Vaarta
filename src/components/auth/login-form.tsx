@@ -52,17 +52,24 @@ export function LoginForm({ role, onBack, onNavigateToSignup }: LoginFormProps) 
     setIsLoading(true);
     
     try {
-      // In a real app, you'd use Firebase Auth. Here, we query Firestore.
+      // 1. Query Firestore for a user with the matching email and role
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("email", "==", data.email), where("role", "==", role));
       
       const querySnapshot = await getDocs(q);
       
+      // 2. Check if a user was found
       if (querySnapshot.empty) {
-        throw new Error("Invalid credentials. No account found with this email for the selected role.");
+        toast({
+          title: "Login Failed",
+          description: "Invalid credentials. No account found with this email for the selected role.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
       }
 
-      // For this prototype, we're not checking the password, just that the user exists.
+      // 3. For this prototype, we're not checking the password, just that the user exists.
       const userDoc = querySnapshot.docs[0];
       const user = { id: userDoc.id, ...userDoc.data() } as AppUser;
       
@@ -75,7 +82,7 @@ export function LoginForm({ role, onBack, onNavigateToSignup }: LoginFormProps) 
     } catch (error: any) {
        toast({
           title: "Login Failed",
-          description: error.message || "An error occurred during login.",
+          description: error.message || "An unexpected error occurred during login. Please check console.",
           variant: "destructive",
         });
     } finally {

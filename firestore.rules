@@ -1,40 +1,46 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Users Collection ---
-    // Allow anyone to perform a query on the users collection for login.
-    // This rule is placed on the collection path, not the document path.
-    match /users/{document=**} {
-      allow list: if true;
+    // Default Deny: By default, no one can read or write to any collection.
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    // Secure individual user documents.
-    // Only allow a logged-in user to GET their own document. Deny all writes.
+    // Users Collection:
+    // - Anyone can create a new user account (for signup).
+    // - Anyone can query the collection (for login verification).
+    // - A logged-in user can only get their OWN document.
     match /users/{userId} {
+      allow create, list: if true;
       allow get: if request.auth != null && request.auth.uid == userId;
-      allow create, update, delete: if false;
     }
 
-    // --- Applications Collection ---
-    // Allow authenticated users to create an application ONLY for themselves.
-    // Deny all reads, updates, and deletes from the client.
+    // Applications Collection:
+    // - A logged-in user can only create an application for themselves.
     match /applications/{appId} {
       allow create: if request.auth != null && request.resource.data.student_id == request.auth.uid;
-      allow read, update, delete: if false;
     }
     
-    // --- All Other Collections ---
-    // Securely deny all access to any other collections by default.
-    // This catch-all must not interfere with more specific rules above.
-    // We can achieve this by ensuring it's not needed if all collections are specified,
-    // or by structuring it carefully. For now, specific rules are safer.
-    
-    match /attendance/{document=**} { allow read, write: if false; }
-    match /marks/{document=**} { allow read, write: if false; }
-    match /timetable/{document=**} { allow read, write: if false; }
-    match /notices/{document=**} { allow read, write: if false; }
-    match /documents/{document=**} { allow read, write: if false; }
-    match /events/{document=**} { allow read, write: if false; }
+    // Allow read access for other collections as needed for the dashboards
+    match /attendance/{attId} {
+      allow read: if request.auth != null;
+    }
+    match /marks/{markId} {
+      allow read: if request.auth != null;
+    }
+    match /timetable/{ttId} {
+      allow read: if request.auth != null;
+    }
+    match /notices/{noticeId} {
+      allow read, create: if request.auth != null;
+    }
+    match /documents/{docId} {
+      allow read, create: if request.auth != null;
+    }
+    match /events/{eventId} {
+      allow read: if request.auth != null;
+    }
   }
 }
