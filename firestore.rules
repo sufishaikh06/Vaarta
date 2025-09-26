@@ -3,38 +3,30 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow all read and write operations on the users collection for authentication.
+    // Rules for the 'users' collection as a whole
     match /users/{document=**} {
-      allow read, write: if true;
+      // Allow anyone to create a user document (for Sign Up)
+      allow create: if true;
+      
+      // Allow anyone to query the users collection (for Login)
+      allow list: if true;
     }
 
-    // Rules for other collections
+    // Rules for a specific user document
+    match /users/{userId} {
+      // Only allow a user to read or update their OWN document
+      // Note: request.auth.uid will be null for unauthenticated users,
+      // so this rule correctly protects user data.
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Rules for the 'applications' collection
     match /applications/{appId} {
-      allow create: if request.auth != null;
+      // A user must be logged in to create an application
+      // The application's student_id must match the logged-in user's ID.
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.student_id;
     }
 
-    match /attendance/{docId} {
-      allow read: if true;
-    }
-
-    match /marks/{docId} {
-      allow read: if true;
-    }
-
-    match /timetable/{docId} {
-      allow read: if true;
-    }
-
-    match /notices/{docId} {
-      allow read, create: if true;
-    }
-
-    match /documents/{docId} {
-      allow read, create: if true;
-    }
-    
-    match /events/{docId} {
-      allow read: if true;
-    }
+    // Implicitly deny all other operations on all other collections.
   }
 }
