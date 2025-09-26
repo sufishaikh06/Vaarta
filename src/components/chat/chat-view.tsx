@@ -130,7 +130,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     } else {
         console.warn("Speech Recognition not supported in this browser.");
     }
-  }, [toast, selectedLanguage]); // Removed 'input' from dependencies
+  }, [toast, selectedLanguage]);
 
   const onFormSubmit = (data: any) => {
     setIsFormOpen(false);
@@ -305,6 +305,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
       recognitionRef.current.stop();
     } else {
       setInput(''); // Clear input before starting a new recording
+      finalTranscriptRef.current = '';
       recognitionRef.current.lang = selectedLanguage.code;
       recognitionRef.current.start();
     }
@@ -589,5 +590,3 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
     </div>
   );
 }
-
-    
