@@ -300,7 +300,10 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     setAudioPlaying(null);
 
     try {
-        const response = await textToSpeech(message.text);
+        const response = await textToSpeech({
+          text: message.text,
+          languageCode: selectedLanguage.code
+        });
         if(!response || !response.media) {
              toast({ 
                 title: "Text-to-Speech Failed", 
