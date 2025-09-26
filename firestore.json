@@ -8,6 +8,13 @@
       "email": "rohan.sharma@example.com",
       "ERP_id": "STU12345"
     },
+    "user_student_suraj": {
+      "name": "Suraj Kelaginamani",
+      "role": "student",
+      "department": "Computer Science",
+      "email": "kelaginamanisuraj777@gmail.com",
+      "ERP_id": "STU54321"
+    },
     "user_faculty_1": {
       "name": "Dr. Priya Mehta",
       "role": "faculty",
