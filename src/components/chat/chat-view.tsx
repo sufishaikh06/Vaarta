@@ -75,7 +75,6 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
   const [audioPlaying, setAudioPlaying] = useState<string | null>(null);
   const [audioLoading, setAudioLoading] = useState<string | null>(null);
   const [conversationState, setConversationState] = useState<ConversationState>('idle');
-  const [lastInputWasVoice, setLastInputWasVoice] = useState(false);
   const applicationData = useRef<Partial<any>>({});
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -154,34 +153,32 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
         setAudioLoading(null);
     }
   };
-
-  const handleLeaveApplicationConversation = useCallback(async (userInput: string, wasVoiceInput: boolean) => {
+  
+  const handleLeaveApplicationConversation = useCallback(async (userInput: string) => {
       let botResponseText = '';
-      let botMsg: Message | null = null;
       switch (conversationState) {
           case 'applying_leave_faculty_name':
               applicationData.current.facultyName = userInput;
               setConversationState('applying_leave_faculty_email');
               botResponseText = `Got it. What is ${userInput}'s email address?`;
-              botMsg = addMessage('bot', botResponseText);
+              addMessage('bot', botResponseText);
               break;
           case 'applying_leave_faculty_email':
               applicationData.current.facultyEmail = userInput;
               setConversationState('applying_leave_subject');
               botResponseText = "Great. What should be the subject of the email?";
-              botMsg = addMessage('bot', botResponseText);
+              addMessage('bot', botResponseText);
               break;
           case 'applying_leave_subject':
               applicationData.current.subject = userInput;
               setConversationState('applying_leave_reason');
               botResponseText = "Perfect. Now, please tell me the reason for your leave.";
-              botMsg = addMessage('bot', botResponseText);
+              addMessage('bot', botResponseText);
               break;
           case 'applying_leave_reason':
               applicationData.current.reason = userInput;
               setConversationState('idle');
-              botResponseText = "Thank you. I'm drafting the application now based on the details you provided.";
-              botMsg = addMessage('bot', botResponseText);
+              addMessage('bot', "Thank you. I'm drafting the application now based on the details you provided.");
               
               try {
                   const output = await draftApplication({
@@ -209,8 +206,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
                                 faculty_name: fullApplicationData.facultyName,
                                 faculty_email: fullApplicationData.facultyEmail,
                             });
-                            const successMsg = addMessage('bot', `Your application has been sent to ${applicationData.current.facultyName}.`);
-                            if(wasVoiceInput) await handlePlayAudio(successMsg);
+                            addMessage('bot', `Your application has been sent to ${applicationData.current.facultyName}.`);
                             applicationData.current = {};
                           } catch (error) {
                              addMessage('bot', 'There was a problem submitting your application. Please check the error message and try again.');
@@ -226,9 +222,8 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
                   addMessage('bot', 'Sorry, I had trouble drafting the application. Please try again.');
                   applicationData.current = {};
               }
-              return botMsg; // Return the initial "drafting now" message
+              break;
       }
-      return botMsg;
   }, [user, conversationState]);
 
   const addTypingIndicator = () => {
@@ -243,16 +238,9 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     setInput('');
     addTypingIndicator();
 
-    const wasVoiceInput = lastInputWasVoice;
-    // Reset the flag immediately after capturing its value
-    if (lastInputWasVoice) {
-      setLastInputWasVoice(false);
-    }
-
     // Check for conversational state first
     if (conversationState !== 'idle') {
-        const botMsg = await handleLeaveApplicationConversation(userInput, wasVoiceInput);
-        if (wasVoiceInput && botMsg) await handlePlayAudio(botMsg);
+        handleLeaveApplicationConversation(userInput);
         return;
     }
 
@@ -260,13 +248,9 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     if (userInput.toLowerCase().includes('apply for leave')) {
       if (role === 'student') {
         setConversationState('applying_leave_faculty_name');
-        const botMsg = { id: 'leave-1', role: 'bot' as const, text: "Sure, I can help with that. Who is the faculty member you want to send this to?" };
-        setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
-        if (wasVoiceInput) await handlePlayAudio(botMsg);
+        setMessages((prev) => [...prev.filter(m => !m.isTyping), { id: 'leave-1', role: 'bot', text: "Sure, I can help with that. Who is the faculty member you want to send this to?" }]);
       } else {
-        const botMsg = { id: 'leave-err-1', role: 'bot' as const, text: "This feature is only available for students." };
-        setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
-        if (wasVoiceInput) await handlePlayAudio(botMsg);
+        setMessages((prev) => [...prev.filter(m => !m.isTyping), { id: 'leave-err-1', role: 'bot', text: "This feature is only available for students." }]);
       }
     } else if (userInput.toLowerCase().includes('post notice')) {
       if (role === 'faculty') {
@@ -274,9 +258,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
         setIsFormOpen(true);
         setMessages(prev => prev.filter(m => !m.isTyping));
       } else {
-        const botMsg = { id: 'notice-err-1', role: 'bot' as const, text: "This feature is only available for faculty members." };
-        setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
-        if (wasVoiceInput) await handlePlayAudio(botMsg);
+        setMessages((prev) => [...prev.filter(m => !m.isTyping), { id: 'notice-err-1', role: 'bot', text: "This feature is only available for faculty members." }]);
       }
     } else {
       // Default to RAG flow
@@ -286,17 +268,13 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
             userId: user?.id,
             userRole: user?.role,
         });
-        const botMsg = addMessage('bot', output.answer);
-        if (wasVoiceInput) {
-            await handlePlayAudio(botMsg);
-        }
+        addMessage('bot', output.answer);
       } catch (e) {
         console.error(e);
-        const botMsg = addMessage('bot', 'Sorry, I am having trouble connecting to my knowledge base. Please try again in a moment.');
-        if(wasVoiceInput) await handlePlayAudio(botMsg);
+        addMessage('bot', 'Sorry, I am having trouble connecting to my knowledge base. Please try again in a moment.');
       }
     }
-  }, [input, role, user, conversationState, lastInputWasVoice, handleLeaveApplicationConversation]);
+  }, [input, role, user, conversationState, handleLeaveApplicationConversation]);
   
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -331,7 +309,6 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
         setIsRecording(false);
         const finalMessage = finalTranscriptRef.current.trim();
         if (finalMessage) {
-            setLastInputWasVoice(true); 
             handleSendMessage(finalMessage);
         }
         finalTranscriptRef.current = ''; // Clear the ref for the next use
@@ -594,3 +571,5 @@ function ApplicationPreview({ application, onConfirm }: { application: any, onCo
     </div>
   );
 }
+
+    
