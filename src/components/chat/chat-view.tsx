@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import type { UserRole, AppUser } from './chat-widget';
@@ -80,6 +79,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const finalTranscriptRef = useRef<string>(''); // Ref to hold the final transcript
   const { toast } = useToast();
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -91,7 +91,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
-      recognition.continuous = false; // Stop after a pause in speech
+      recognition.continuous = false;
       recognition.interimResults = true;
       recognition.lang = selectedLanguage.code;
 
@@ -105,11 +105,12 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
             interimTranscript += event.results[i][0].transcript;
           }
         }
+        finalTranscriptRef.current = finalTranscript; // Store final transcript in ref
         setInput(finalTranscript + interimTranscript);
       };
 
       recognition.onerror = (event) => {
-        if (event.error !== 'network' && event.error !== 'no-speech') {
+        if (event.error !== 'network' && event.error !== 'no-speech' && event.error !== 'aborted') {
             toast({ title: "Voice Error", description: `An error occurred: ${event.error}`, variant: "destructive" });
         }
         setIsRecording(false);
@@ -117,18 +118,19 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
 
       recognition.onend = () => {
         setIsRecording(false);
-        // Automatically send the message if there's content
-        if (input.trim()) {
-            setLastInputWasVoice(true); // Mark that this message came from voice input
-            handleSendMessage(input);
+        const finalMessage = finalTranscriptRef.current.trim();
+        if (finalMessage) {
+            setLastInputWasVoice(true); 
+            handleSendMessage(finalMessage);
         }
+        finalTranscriptRef.current = ''; // Clear the ref for the next use
       };
 
       recognitionRef.current = recognition;
     } else {
         console.warn("Speech Recognition not supported in this browser.");
     }
-  }, [toast, selectedLanguage, input]); // Add input to dependencies
+  }, [toast, selectedLanguage]); // Removed 'input' from dependencies
 
   const onFormSubmit = (data: any) => {
     setIsFormOpen(false);
