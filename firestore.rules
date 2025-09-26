@@ -3,49 +3,10 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // --- Users Collection Rules ---
-    
-    // This rule applies to the ENTIRE 'users' collection.
-    // It allows anyone to query the collection (for login) and create documents (for signup).
-    match /users/{document=**} {
-      allow list, create: if true;
-    }
-    
-    // This rule applies to a SPECIFIC user document.
-    // It allows a logged-in user to read or update ONLY THEIR OWN document.
-    match /users/{userId} {
-      allow read, update: if request.auth.uid == userId;
-    }
-
-    // --- Other Collection Rules ---
-
-    // Allow logged-in users to create applications for themselves.
-    match /applications/{appId} {
-      allow create: if request.auth.uid == request.resource.data.student_id;
-    }
-
-    // Allow anyone to read public data like timetable, notices, documents, and events.
-    match /timetable/{docId} {
-      allow read: if true;
-    }
-    match /notices/{docId} {
-      allow read: if true;
-    }
-    match /documents/{docId} {
-      allow read: if true;
-    }
-    match /events/{docId} {
-      allow read: if true;
-    }
-
-    // Allow parents to view their child's marks and attendance.
-    // This is a simplified rule for the prototype.
-    match /marks/{docId} {
-      allow read: if true;
-    }
-    match /attendance/{docId} {
-      allow read: if true;
+    // Allow read and write access for development and seeding.
+    // WARNING: This is insecure for production.
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }
