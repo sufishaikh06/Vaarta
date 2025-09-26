@@ -1,0 +1,18 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "academic_calendar",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "type",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "start_date",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ]
+}
