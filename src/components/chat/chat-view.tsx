@@ -1,5 +1,6 @@
+
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { UserRole, AppUser } from './chat-widget';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -86,58 +87,6 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-  
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = selectedLanguage.code;
-
-      recognition.onresult = (event) => {
-        let interimTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscriptRef.current += event.results[i][0].transcript;
-          } else {
-            interimTranscript += event.results[i][0].transcript;
-          }
-        }
-        setInput(finalTranscriptRef.current + interimTranscript);
-      };
-
-      recognition.onerror = (event) => {
-        if (event.error !== 'network' && event.error !== 'no-speech' && event.error !== 'aborted') {
-            toast({ title: "Voice Error", description: `An error occurred: ${event.error}`, variant: "destructive" });
-        }
-        setIsRecording(false);
-      };
-
-      recognition.onend = () => {
-        setIsRecording(false);
-        const finalMessage = finalTranscriptRef.current.trim();
-        if (finalMessage) {
-            setLastInputWasVoice(true); 
-            handleSendMessage(finalMessage);
-        }
-        finalTranscriptRef.current = ''; // Clear the ref for the next use
-      };
-
-      recognitionRef.current = recognition;
-    } else {
-        console.warn("Speech Recognition not supported in this browser.");
-    }
-  }, [toast, selectedLanguage, handleSendMessage]);
-
-  const onFormSubmit = (data: any) => {
-    setIsFormOpen(false);
-    addMessage('bot', `A new ${formType} has been submitted successfully!`);
-    toast({
-        title: `${formType === 'application' ? 'Application' : 'Notice'} Submitted`,
-        description: "Your submission has been recorded.",
-    });
-  }
 
   const addMessage = (role: 'user' | 'bot', text?: string, component?: React.ReactNode) => {
     const id = `${Date.now()}-${Math.random()}`;
@@ -145,75 +94,68 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     setMessages((prev) => [...prev.filter(m => !m.isTyping), newMessage]);
     return newMessage;
   };
-  
-  const addTypingIndicator = () => {
-    setMessages((prev) => [...prev, { id: 'typing', role: 'bot', isTyping: true }]);
-  }
 
-  const handleSendMessage = async (messageText?: string) => {
-    const userInput = messageText || input;
-    if (userInput.trim() === '') return;
-    
-    addMessage('user', userInput);
-    setInput('');
-    addTypingIndicator();
+  const handlePlayAudio = async (message: Message) => {
+    if (typeof message.text !== 'string' || message.role === 'user') return;
 
-    const wasVoiceInput = lastInputWasVoice;
-    // Reset the flag immediately after capturing its value
-    if (lastInputWasVoice) {
-      setLastInputWasVoice(false);
-    }
-
-    // Check for conversational state first
-    if (conversationState !== 'idle') {
-        const botMsg = await handleLeaveApplicationConversation(userInput, wasVoiceInput);
-        if (wasVoiceInput && botMsg) await handlePlayAudio(botMsg);
+    if (audioRef.current && audioPlaying === message.id) {
+        audioRef.current.pause();
+        audioRef.current = null;
+        setAudioPlaying(null);
         return;
     }
 
-    // Command/intent handling
-    if (userInput.toLowerCase().includes('apply for leave')) {
-      if (role === 'student') {
-        setConversationState('applying_leave_faculty_name');
-        const botMsg = { id: 'leave-1', role: 'bot' as const, text: "Sure, I can help with that. Who is the faculty member you want to send this to?" };
-        setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
-        if (wasVoiceInput) await handlePlayAudio(botMsg);
-      } else {
-        const botMsg = { id: 'leave-err-1', role: 'bot' as const, text: "This feature is only available for students." };
-        setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
-        if (wasVoiceInput) await handlePlayAudio(botMsg);
-      }
-    } else if (userInput.toLowerCase().includes('post notice')) {
-      if (role === 'faculty') {
-        setFormType('notice');
-        setIsFormOpen(true);
-        setMessages(prev => prev.filter(m => !m.isTyping));
-      } else {
-        const botMsg = { id: 'notice-err-1', role: 'bot' as const, text: "This feature is only available for faculty members." };
-        setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
-        if (wasVoiceInput) await handlePlayAudio(botMsg);
-      }
-    } else {
-      // Default to RAG flow
-      try {
-        const output = await answerQuestion({
-            question: userInput,
-            userId: user?.id,
-            userRole: user?.role,
+    if (audioRef.current) {
+        audioRef.current.pause();
+    }
+    
+    setAudioLoading(message.id);
+    setAudioPlaying(null);
+
+    try {
+        const response = await textToSpeech({
+          text: message.text,
+          languageCode: selectedLanguage.code
         });
-        const botMsg = addMessage('bot', output.answer);
-        if (wasVoiceInput) {
-            await handlePlayAudio(botMsg);
+        if(!response || !response.media) {
+             toast({ 
+                title: "Text-to-Speech Failed", 
+                description: "Could not generate audio for this message.",
+                variant: "destructive" 
+            });
+            setAudioLoading(null);
+            return;
         }
-      } catch (e) {
-        console.error(e);
-        const botMsg = addMessage('bot', 'Sorry, I am having trouble connecting to my knowledge base. Please try again in a moment.');
-        if(wasVoiceInput) await handlePlayAudio(botMsg);
-      }
+        const audioData = response.media;
+        
+        const newAudio = new Audio(audioData);
+        audioRef.current = newAudio;
+        
+        newAudio.oncanplaythrough = () => {
+            newAudio.play();
+            setAudioPlaying(message.id);
+            setAudioLoading(null);
+        };
+        newAudio.onended = () => {
+            setAudioPlaying(null);
+            audioRef.current = null;
+        };
+        newAudio.onerror = () => {
+             toast({ title: "Error", description: "Could not play audio.", variant: "destructive" });
+             setAudioLoading(null);
+        }
+
+    } catch (error: any) {
+        console.error("TTS Error:", error);
+        const errorMessage = error.message && error.message.includes('429') 
+            ? "Audio generation limit reached for today."
+            : "Could not generate audio for this message.";
+        toast({ title: "Text-to-Speech Failed", description: errorMessage, variant: "destructive" });
+        setAudioLoading(null);
     }
   };
 
-  const handleLeaveApplicationConversation = async (userInput: string, wasVoiceInput: boolean) => {
+  const handleLeaveApplicationConversation = useCallback(async (userInput: string, wasVoiceInput: boolean) => {
       let botResponseText = '';
       let botMsg: Message | null = null;
       switch (conversationState) {
@@ -287,6 +229,127 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
               return botMsg; // Return the initial "drafting now" message
       }
       return botMsg;
+  }, [user, conversationState]);
+
+  const addTypingIndicator = () => {
+    setMessages((prev) => [...prev, { id: 'typing', role: 'bot', isTyping: true }]);
+  }
+
+  const handleSendMessage = useCallback(async (messageText?: string) => {
+    const userInput = messageText || input;
+    if (userInput.trim() === '') return;
+    
+    addMessage('user', userInput);
+    setInput('');
+    addTypingIndicator();
+
+    const wasVoiceInput = lastInputWasVoice;
+    // Reset the flag immediately after capturing its value
+    if (lastInputWasVoice) {
+      setLastInputWasVoice(false);
+    }
+
+    // Check for conversational state first
+    if (conversationState !== 'idle') {
+        const botMsg = await handleLeaveApplicationConversation(userInput, wasVoiceInput);
+        if (wasVoiceInput && botMsg) await handlePlayAudio(botMsg);
+        return;
+    }
+
+    // Command/intent handling
+    if (userInput.toLowerCase().includes('apply for leave')) {
+      if (role === 'student') {
+        setConversationState('applying_leave_faculty_name');
+        const botMsg = { id: 'leave-1', role: 'bot' as const, text: "Sure, I can help with that. Who is the faculty member you want to send this to?" };
+        setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
+        if (wasVoiceInput) await handlePlayAudio(botMsg);
+      } else {
+        const botMsg = { id: 'leave-err-1', role: 'bot' as const, text: "This feature is only available for students." };
+        setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
+        if (wasVoiceInput) await handlePlayAudio(botMsg);
+      }
+    } else if (userInput.toLowerCase().includes('post notice')) {
+      if (role === 'faculty') {
+        setFormType('notice');
+        setIsFormOpen(true);
+        setMessages(prev => prev.filter(m => !m.isTyping));
+      } else {
+        const botMsg = { id: 'notice-err-1', role: 'bot' as const, text: "This feature is only available for faculty members." };
+        setMessages((prev) => [...prev.filter(m => !m.isTyping), botMsg]);
+        if (wasVoiceInput) await handlePlayAudio(botMsg);
+      }
+    } else {
+      // Default to RAG flow
+      try {
+        const output = await answerQuestion({
+            question: userInput,
+            userId: user?.id,
+            userRole: user?.role,
+        });
+        const botMsg = addMessage('bot', output.answer);
+        if (wasVoiceInput) {
+            await handlePlayAudio(botMsg);
+        }
+      } catch (e) {
+        console.error(e);
+        const botMsg = addMessage('bot', 'Sorry, I am having trouble connecting to my knowledge base. Please try again in a moment.');
+        if(wasVoiceInput) await handlePlayAudio(botMsg);
+      }
+    }
+  }, [input, role, user, conversationState, lastInputWasVoice, handleLeaveApplicationConversation]);
+  
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = selectedLanguage.code;
+
+      recognition.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        finalTranscriptRef.current = finalTranscript;
+        setInput(finalTranscript + interimTranscript);
+      };
+
+      recognition.onerror = (event) => {
+        if (event.error !== 'network' && event.error !== 'no-speech' && event.error !== 'aborted') {
+            toast({ title: "Voice Error", description: `An error occurred: ${event.error}`, variant: "destructive" });
+        }
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+        const finalMessage = finalTranscriptRef.current.trim();
+        if (finalMessage) {
+            setLastInputWasVoice(true); 
+            handleSendMessage(finalMessage);
+        }
+        finalTranscriptRef.current = ''; // Clear the ref for the next use
+      };
+
+      recognitionRef.current = recognition;
+    } else {
+        console.warn("Speech Recognition not supported in this browser.");
+    }
+  }, [toast, selectedLanguage, handleSendMessage]);
+
+  const onFormSubmit = (data: any) => {
+    setIsFormOpen(false);
+    addMessage('bot', `A new ${formType} has been submitted successfully!`);
+    toast({
+        title: `${formType === 'application' ? 'Application' : 'Notice'} Submitted`,
+        description: "Your submission has been recorded.",
+    });
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -313,66 +376,6 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     setIsRecording(!isRecording);
   };
   
-  const handlePlayAudio = async (message: Message) => {
-    if (typeof message.text !== 'string' || message.role === 'user') return;
-
-    if (audioRef.current && audioPlaying === message.id) {
-        audioRef.current.pause();
-        audioRef.current = null;
-        setAudioPlaying(null);
-        return;
-    }
-
-    if (audioRef.current) {
-        audioRef.current.pause();
-    }
-    
-    setAudioLoading(message.id);
-    setAudioPlaying(null);
-
-    try {
-        const response = await textToSpeech({
-          text: message.text,
-          languageCode: selectedLanguage.code
-        });
-        if(!response || !response.media) {
-             toast({ 
-                title: "Text-to-Speech Failed", 
-                description: "Could not generate audio for this message.",
-                variant: "destructive" 
-            });
-            setAudioLoading(null);
-            return;
-        }
-        const audioData = response.media;
-        
-        const newAudio = new Audio(audioData);
-        audioRef.current = newAudio;
-        
-        newAudio.oncanplaythrough = () => {
-            newAudio.play();
-            setAudioPlaying(message.id);
-            setAudioLoading(null);
-        };
-        newAudio.onended = () => {
-            setAudioPlaying(null);
-            audioRef.current = null;
-        };
-        newAudio.onerror = () => {
-             toast({ title: "Error", description: "Could not play audio.", variant: "destructive" });
-             setAudioLoading(null);
-        }
-
-    } catch (error: any) {
-        console.error("TTS Error:", error);
-        const errorMessage = error.message && error.message.includes('429') 
-            ? "Audio generation limit reached for today."
-            : "Could not generate audio for this message.";
-        toast({ title: "Text-to-Speech Failed", description: errorMessage, variant: "destructive" });
-        setAudioLoading(null);
-    }
-  };
-
   const renderFormattedText = (text: string) => {
     const html = text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
