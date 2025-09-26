@@ -97,16 +97,14 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
 
       recognition.onresult = (event) => {
         let interimTranscript = '';
-        let finalTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
+            finalTranscriptRef.current += event.results[i][0].transcript;
           } else {
             interimTranscript += event.results[i][0].transcript;
           }
         }
-        finalTranscriptRef.current = finalTranscript; // Store final transcript in ref
-        setInput(finalTranscript + interimTranscript);
+        setInput(finalTranscriptRef.current + interimTranscript);
       };
 
       recognition.onerror = (event) => {
@@ -130,7 +128,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     } else {
         console.warn("Speech Recognition not supported in this browser.");
     }
-  }, [toast, selectedLanguage]);
+  }, [toast, selectedLanguage, handleSendMessage]);
 
   const onFormSubmit = (data: any) => {
     setIsFormOpen(false);
@@ -161,13 +159,14 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     addTypingIndicator();
 
     const wasVoiceInput = lastInputWasVoice;
+    // Reset the flag immediately after capturing its value
     if (lastInputWasVoice) {
       setLastInputWasVoice(false);
     }
 
     // Check for conversational state first
     if (conversationState !== 'idle') {
-        const botMsg = await handleLeaveApplicationConversation(userInput);
+        const botMsg = await handleLeaveApplicationConversation(userInput, wasVoiceInput);
         if (wasVoiceInput && botMsg) await handlePlayAudio(botMsg);
         return;
     }
@@ -214,7 +213,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
     }
   };
 
-  const handleLeaveApplicationConversation = async (userInput: string) => {
+  const handleLeaveApplicationConversation = async (userInput: string, wasVoiceInput: boolean) => {
       let botResponseText = '';
       let botMsg: Message | null = null;
       switch (conversationState) {
@@ -269,7 +268,7 @@ export function ChatView({ role, onLogout }: { role: UserRole; onLogout: () => v
                                 faculty_email: fullApplicationData.facultyEmail,
                             });
                             const successMsg = addMessage('bot', `Your application has been sent to ${applicationData.current.facultyName}.`);
-                            if(lastInputWasVoice) await handlePlayAudio(successMsg);
+                            if(wasVoiceInput) await handlePlayAudio(successMsg);
                             applicationData.current = {};
                           } catch (error) {
                              addMessage('bot', 'There was a problem submitting your application. Please check the error message and try again.');
