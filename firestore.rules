@@ -3,44 +3,27 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Default Deny: By default, no one can read or write to any collection.
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Users Collection:
-    // - Anyone can create a new user account (for signup).
-    // - Anyone can query the collection (for login verification).
-    // - A logged-in user can only get their OWN document.
+    // Rules for the 'users' collection
     match /users/{userId} {
-      allow create, list: if true;
-      allow get: if request.auth != null && request.auth.uid == userId;
+      // Allow anyone to create a user document (for Sign Up)
+      allow create: if true;
+      
+      // Allow anyone to query the users collection (for Login)
+      allow list: if true;
+
+      // Only allow a user to read or update their OWN document
+      allow read, update: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Applications Collection:
-    // - A logged-in user can only create an application for themselves.
+    // Rules for the 'applications' collection
     match /applications/{appId} {
-      allow create: if request.auth != null && request.resource.data.student_id == request.auth.uid;
+      // Only allow a logged-in user to create an application for themselves
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.student_id;
     }
     
-    // Allow read access for other collections as needed for the dashboards
-    match /attendance/{attId} {
-      allow read: if request.auth != null;
-    }
-    match /marks/{markId} {
-      allow read: if request.auth != null;
-    }
-    match /timetable/{ttId} {
-      allow read: if request.auth != null;
-    }
-    match /notices/{noticeId} {
-      allow read, create: if request.auth != null;
-    }
-    match /documents/{docId} {
-      allow read, create: if request.auth != null;
-    }
-    match /events/{eventId} {
-      allow read: if request.auth != null;
+    // Default-deny all other collections/operations
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
